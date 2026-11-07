@@ -8,9 +8,7 @@ import type { FeedSource } from '../ui/App';
 import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
 import { themes } from '../ui/tokens';
-import { SPIKE_HASH } from '../spike/spike-panel';
-
-export const READER_ON_CLASS = 'unred-it-on';
+import { READER_ON_CLASS, SPIKE_HASH } from '../lib/constants';
 
 /** Hides Reddit's page under the reader. Added before Reddit's page draws. */
 function pageCss(): string {
@@ -47,7 +45,9 @@ function redditSource(): FeedSource {
 }
 
 function whenBodyReady(run: () => void): void {
-  if (document.body) {
+  // At document_start the body may not exist yet, whatever the DOM types say.
+  const body = document.body as HTMLElement | null;
+  if (body) {
     run();
   } else {
     document.addEventListener('DOMContentLoaded', run, { once: true });
@@ -67,12 +67,14 @@ export default defineContentScript({
     document.documentElement.append(style);
     document.documentElement.classList.add(READER_ON_CLASS);
 
-    const fontsLoaded = loadFonts();
+    // The fonts are local files, so waiting for them is short and avoids a
+    // visible font swap.
+    const fontsLoaded = loadFonts().catch(() => false);
     whenBodyReady(() => {
-      const host = mountReader(document.body, redditSource());
       void fontsLoaded.then((ok) => {
-        // Temporary M4 check for the owner's test: is Inter in use?
-        host.dataset.fonts = ok ? 'inter' : 'system';
+        // Temporary M4 note for the owner's test: which font is in use.
+        const note = ok ? 'Font: Inter' : 'Font: system (Inter did not load)';
+        mountReader(document.body, redditSource(), note);
       });
     });
   },

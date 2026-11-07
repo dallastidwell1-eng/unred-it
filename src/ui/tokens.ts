@@ -159,9 +159,11 @@ export function themeVariables(theme: ThemeName): string {
   if (theme === 'dark') {
     lines.push('--up-fg: var(--up);', '--up-bg: transparent;');
     lines.push('--down-fg: var(--down);', '--down-bg: transparent;');
+    lines.push('--vote-pad-x: 0px;');
   } else {
     lines.push('--up-fg: var(--on-vote);', '--up-bg: var(--up);');
     lines.push('--down-fg: var(--on-vote);', '--down-bg: var(--down);');
+    lines.push('--vote-pad-x: 6px;');
   }
   return lines.join('\n');
 }

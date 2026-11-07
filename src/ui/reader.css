@@ -146,10 +146,10 @@ button {
   background: var(--down-bg);
 }
 
+/* Light mode draws the vote as a chip; dark mode only colors it. */
 .score.up,
 .score.down {
-  padding: 0 6px;
-  margin: 0 -2px;
+  padding: 0 var(--vote-pad-x);
 }
 
 .comments {

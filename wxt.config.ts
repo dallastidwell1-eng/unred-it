@@ -1,4 +1,18 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'wxt';
+
+// Bundled fonts (D-051), copied from their npm packages into the extension.
+const FONT_FILES: [string, string][] = [
+  ['@fontsource-variable/inter/files/inter-latin-wght-normal.woff2', 'fonts/inter-latin.woff2'],
+  [
+    '@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2',
+    'fonts/inter-latin-ext.woff2',
+  ],
+  [
+    '@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2',
+    'fonts/inter-tight-latin.woff2',
+  ],
+];
 
 // Unred It build configuration. Decisions: D-004 (Firefox, AMO), D-005 (WXT),
 // D-045 (add-on ID), D-046 (Manifest V3).
@@ -7,6 +21,13 @@ export default defineConfig({
   // Explicit imports only: every file says where its names come from.
   imports: false,
   manifestVersion: 3,
+  hooks: {
+    'build:publicAssets': (_wxt, files) => {
+      for (const [from, to] of FONT_FILES) {
+        files.push({ absoluteSrc: resolve('node_modules', from), relativeDest: to });
+      }
+    },
+  },
   // The sources zip is for AMO reviewers (OQ-001): only what builds the extension.
   zip: {
     excludeSources: [
@@ -14,6 +35,7 @@ export default defineConfig({
       'design/**',
       'references/**',
       'scripts/sign.mjs',
+      'dev-preview/**',
       '.claude/**',
       '.github/**',
       'CLAUDE.md',

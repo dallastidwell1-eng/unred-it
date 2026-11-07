@@ -13,8 +13,8 @@ import {
   voteBody,
   type VoteDirection,
 } from '../lib/reddit-data';
+import { SPIKE_HASH } from '../lib/constants';
 
-export const SPIKE_HASH = '#unred-spike';
 const PANEL_ID = 'unred-it-spike';
 
 type Mode = 'extension' | 'page';
