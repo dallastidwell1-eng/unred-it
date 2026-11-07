@@ -2,19 +2,23 @@
 // and views stacked over it: an opened post (content layer) and comments.
 // The feed stays mounted underneath, so its place never changes (D-021).
 
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
 import type { FeedPage, Post, VoteDirection } from '../lib/reddit-data';
+import { currentFeed, type Subreddit } from '../lib/subreddits';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { CommentsView } from './CommentsView';
 import { ContentLayer } from './ContentLayer';
+import { FeedPicker } from './FeedPicker';
 import { ChevronDownIcon } from './icons';
 import { FeedRow } from './FeedRow';
 
 /** Where the data comes from: Reddit in the extension, samples in the preview. */
 export interface FeedSource {
-  /** "Home" or "r/name". */
+  /** "Home", "Popular", "All" or "r/name". */
   title: string;
+  /** The page path of this feed, for example "/" or "/r/books/top/". */
+  path: string;
   /** Reddit's own page for this feed (the escape hatch). */
   redditUrl: string;
   load(after: string | null): Promise<FeedPage>;
@@ -22,13 +26,17 @@ export interface FeedSource {
   loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
   /** Sends a vote as the logged-in user. Missing where voting is not possible. */
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
+  /** The user's subscribed subreddits, sorted. Missing where they cannot be read. */
+  loadSubreddits?: () => Promise<Subreddit[]>;
+  /** Opens another feed. Default: load that page in place of this one. */
+  openFeed?: (path: string) => void;
 }
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
 
-/** One view over the feed. */
+/** One view over the feed. The picker has no post, so its fullname is empty. */
 interface Overlay {
-  kind: 'post' | 'comments';
+  kind: 'post' | 'comments' | 'picker';
   fullname: string;
 }
 
@@ -97,15 +105,71 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     }
   }, []);
 
-  // Back and Forward close and reopen views.
+  const pickerOpen = overlays.at(-1)?.kind === 'picker';
+
+  const togglePicker = useCallback(
+    (event: MouseEvent) => {
+      if (overlaysRef.current.at(-1)?.kind === 'picker') {
+        closeTop();
+      } else if (overlaysRef.current.length === 0) {
+        push({ kind: 'picker', fullname: '' }, event.currentTarget as HTMLElement);
+      }
+    },
+    [push, closeTop],
+  );
+
+  /**
+   * Opens the chosen feed. The new page takes the picker's place in history,
+   * so Back from it returns to this feed with the picker closed.
+   */
+  const chooseFeed = useCallback(
+    (path: string) => {
+      setOverlays([]);
+      if (source.openFeed) {
+        source.openFeed(path);
+      } else {
+        window.location.replace(path);
+      }
+    },
+    [source],
+  );
+
+  // Subscriptions are read once per page load, when the picker first opens.
+  const subscriptions = useRef<Promise<Subreddit[]> | null>(null);
+  const loadSubreddits = useMemo(() => {
+    const load = source.loadSubreddits;
+    if (!load) {
+      return undefined;
+    }
+    return () => {
+      subscriptions.current ??= load().catch((cause: unknown) => {
+        subscriptions.current = null; // the next try asks Reddit again
+        throw cause;
+      });
+      return subscriptions.current;
+    };
+  }, [source]);
+
+  // Back and Forward close and reopen views. A page brought back from the
+  // browser's memory (Back after choosing another feed) shows what its
+  // history entry says, so a picker left open there is closed.
   useEffect(() => {
-    const onPop = (event: PopStateEvent) => {
-      const state: unknown = event.state;
+    const sync = (state: unknown) => {
       setOverlays(isOurState(state) ? state.overlays : []);
     };
+    const onPop = (event: PopStateEvent) => {
+      sync(event.state);
+    };
+    const onShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        sync(window.history.state);
+      }
+    };
     window.addEventListener('popstate', onPop);
+    window.addEventListener('pageshow', onShow);
     return () => {
       window.removeEventListener('popstate', onPop);
+      window.removeEventListener('pageshow', onShow);
     };
   }, []);
 
@@ -203,7 +267,14 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
   return (
     <div class="app">
       <header class="topbar">
-        <button class="picker" type="button" aria-label={`${source.title}, choose a feed`}>
+        <button
+          class="picker"
+          type="button"
+          aria-label={`${source.title}, choose a feed`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
+          onClick={togglePicker}
+        >
           {source.title}
           <ChevronDownIcon />
         </button>
@@ -239,12 +310,24 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         {note && <p>{note}</p>}
       </footer>
       {overlays.map((overlay, index) => {
+        const active = index === overlays.length - 1;
+        const key = `${overlay.kind}-${overlay.fullname}-${String(index)}`;
+        if (overlay.kind === 'picker') {
+          return (
+            <FeedPicker
+              key={key}
+              current={currentFeed(source.path)}
+              loadSubreddits={loadSubreddits}
+              onChoose={chooseFeed}
+              onClose={closeTop}
+              active={active}
+            />
+          );
+        }
         const post = postFor(overlay.fullname);
         if (!post) {
           return null;
         }
-        const active = index === overlays.length - 1;
-        const key = `${overlay.kind}-${overlay.fullname}-${String(index)}`;
         if (overlay.kind === 'post') {
           return (
             <ContentLayer

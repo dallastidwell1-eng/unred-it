@@ -5,6 +5,7 @@ import { defineContentScript } from 'wxt/utils/define-content-script';
 import { feedJsonPath, feedTitle, isFeedPath, readerTurnedOff } from '../lib/feed-route';
 import { createRedditClient } from '../lib/reddit-client';
 import { parseFeedPage } from '../lib/reddit-data';
+import { loadSubscriptions } from '../lib/subreddits';
 import { loadMoreItems, loadThread } from '../lib/thread-loader';
 import type { FeedSource } from '../ui/App';
 import { loadFonts } from '../ui/fonts';
@@ -45,7 +46,9 @@ function redditSource(): FeedSource {
   const client = createRedditClient((url, init) => fetch(url, init));
   return {
     vote: (fullname, dir) => client.vote(fullname, dir),
+    loadSubreddits: () => loadSubscriptions(fetchJson),
     title: feedTitle(pathname),
+    path: pathname,
     redditUrl: `${pathname}?${off.toString()}`,
     async load(after) {
       return parseFeedPage(await fetchJson(feedJsonPath(pathname, search, after)));

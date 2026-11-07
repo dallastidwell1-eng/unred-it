@@ -73,6 +73,23 @@ export function ChevronDownIcon({ size = 18 }: { size?: number }) {
   );
 }
 
+export function SearchIcon({ size = 16 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </Icon>
+  );
+}
+
+export function ArrowRightIcon({ size = 18 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </Icon>
+  );
+}
+
 export function BackIcon({ size = 20 }: { size?: number }) {
   return (
     <Icon size={size}>

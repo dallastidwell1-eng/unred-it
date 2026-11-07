@@ -28,7 +28,7 @@ export function useDialogKeys(
       }
       const focusable = Array.from(
         element.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), select, [tabindex="0"]',
+          'a[href], button:not([disabled]), input:not([disabled]), select, [tabindex="0"]',
         ),
       );
       const first = focusable[0];

@@ -18,10 +18,15 @@ export function isFeedPath(pathname: string): boolean {
   return false;
 }
 
-/** Short title for the top bar: "Home" or "r/name". */
+/** Short title for the top bar: "Home", "Popular", "All" or "r/name". */
 export function feedTitle(pathname: string): string {
   const parts = pathname.split('/').filter(Boolean);
-  return parts[0] === 'r' && parts[1] ? `r/${parts[1]}` : 'Home';
+  const name = parts[0] === 'r' ? parts[1] : undefined;
+  if (!name) {
+    return 'Home';
+  }
+  const fixed: Record<string, string> = { popular: 'Popular', all: 'All' };
+  return fixed[name.toLowerCase()] ?? `r/${name}`;
 }
 
 /**

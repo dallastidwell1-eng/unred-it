@@ -30,6 +30,8 @@ describe('feedTitle', () => {
     expect(feedTitle('/')).toBe('Home');
     expect(feedTitle('/top/')).toBe('Home');
     expect(feedTitle('/r/firefox/new/')).toBe('r/firefox');
+    expect(feedTitle('/r/popular/')).toBe('Popular');
+    expect(feedTitle('/r/All/top/')).toBe('All');
   });
 });
 

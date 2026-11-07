@@ -62,6 +62,266 @@ button {
 
 .picker svg {
   color: var(--muted);
+  transition: rotate 180ms ease-out;
+}
+
+.picker[aria-expanded='true'] svg {
+  rotate: 180deg;
+}
+
+/* ---------- Feed picker (5.6) ---------- */
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    translate: 0 -12px;
+  }
+}
+
+/* Scrim and sheet sit under the top bar (z 10), so the bar and its button stay visible. */
+.picker-scrim {
+  position: fixed;
+  inset: 52px 0 0;
+  z-index: 8;
+  background: var(--scrim);
+  animation: fade-in 180ms ease-out;
+}
+
+.sheet {
+  position: fixed;
+  z-index: 9;
+  top: 52px;
+  left: 0;
+  right: 0;
+  max-height: min(660px, calc(100dvh - 52px - 24px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 0 16px 16px;
+  box-shadow: var(--sheet-shadow);
+  outline: none;
+  animation: sheet-in 180ms ease-out;
+}
+
+.sheet-filter {
+  flex: none;
+  margin: 0;
+  padding: 12px 16px 8px;
+}
+
+.filter-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--faint);
+}
+
+.filter-field:focus-within {
+  border-color: var(--blue);
+}
+
+.filter-field svg {
+  flex: none;
+}
+
+.filter-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+
+.filter-field input::placeholder {
+  color: var(--faint);
+  opacity: 1;
+}
+
+.chips {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* 36 px chip inside a 44 px touch target (layout-spec 1.4). */
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 9999px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.chip::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.chip.selected {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.chip:focus-visible {
+  border-radius: 9999px;
+}
+
+.section-label {
+  flex: none;
+  margin: 0;
+  padding: 14px 16px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.sheet-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) transparent;
+  padding-bottom: 8px;
+}
+
+.sub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sub-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding: 0 16px;
+  color: var(--text);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.sub-row:hover,
+.sub-row.default {
+  background: var(--raised);
+}
+
+.sub-row:focus-visible {
+  outline-offset: -2px;
+}
+
+.sub-row.selected {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.sub-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.avatar.tone-1 {
+  background: var(--placeholder-1);
+}
+
+.avatar.tone-2 {
+  background: var(--placeholder-2);
+}
+
+.avatar.tone-3 {
+  background: var(--placeholder-3);
+}
+
+.avatar.tone-4 {
+  background: var(--placeholder-4);
+}
+
+.avatar.go {
+  color: var(--blue);
+}
+
+.sheet-note {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--faint);
+}
+
+.sheet-note p {
+  margin: 0;
+}
+
+/* Tablet and desktop: a 400 px panel under the button, not the full width. */
+@media (min-width: 768px) {
+  .sheet {
+    left: 8px;
+    right: auto;
+    width: 400px;
+    border: 1px solid var(--line);
+    border-top: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .picker-scrim {
+    top: 56px;
+  }
+
+  .sheet {
+    top: 56px;
+    left: max(8px, calc((100% - 736px) / 2));
+    max-height: min(660px, calc(100dvh - 56px - 40px));
+  }
+
+  .chip,
+  .filter-field input,
+  .sub-row {
+    font-size: 14px;
+  }
 }
 
 /* ---------- Feed (5.2) ---------- */

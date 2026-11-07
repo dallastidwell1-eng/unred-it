@@ -27,7 +27,9 @@ export interface ThemeColors {
   /** Unread dot and counts. */
   dot: string;
   scrim: string;
-  /** Image placeholder tiles. */
+  /** Shadow under the picker sheet (a CSS box-shadow value). */
+  sheetShadow: string;
+  /** Image placeholder tiles; also the picker's letter avatars. */
   placeholders: readonly string[];
 }
 
@@ -50,6 +52,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
     onVote: '#1A1A1A',
     dot: '#E5736B',
     scrim: 'rgba(0, 0, 0, 0.5)',
+    sheetShadow: '0 16px 40px rgba(0, 0, 0, 0.4)',
     placeholders: ['#3A3C40', '#2B3340', '#33363B', '#2E3540'],
   },
   // Paper
@@ -70,6 +73,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
     onVote: '#222222',
     dot: '#C2413A',
     scrim: 'rgba(0, 0, 0, 0.25)',
+    sheetShadow: '0 12px 32px rgba(0, 0, 0, 0.12)',
     placeholders: ['#D8DADD', '#D2D9E2', '#DFE1E4', '#D6DCE3'],
   },
 };

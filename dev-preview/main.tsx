@@ -5,11 +5,41 @@
 import '@fontsource-variable/inter';
 import '@fontsource-variable/inter-tight';
 import type { CommentNode, ThreadItem } from '../src/lib/comments';
+import { feedTitle } from '../src/lib/feed-route';
 import type { FeedPage, Post } from '../src/lib/reddit-data';
+import { sortSubreddits, type Subreddit } from '../src/lib/subreddits';
 import type { FeedSource } from '../src/ui/App';
 import { mountReader } from '../src/ui/mount';
 
 const NOW_S = Date.now() / 1000;
+
+// ?feed=/r/books/ pretends to be that feed; ?subs=none or ?subs=error shows
+// the picker's empty and error states.
+const params = new URLSearchParams(window.location.search);
+const FEED = params.get('feed') ?? '/';
+
+const SAMPLE_SUBS: Subreddit[] = sortSubreddits(
+  [
+    'AskHistorians',
+    'astrophotography',
+    'books',
+    'Cooking',
+    'DIY',
+    'firefox',
+    'gardening',
+    'LandscapePhotography',
+    'linux',
+    'NoStupidQuestions',
+    'photography',
+    'science',
+    'space',
+    'technology',
+    'todayilearned',
+    'woodworking',
+    'worldnews',
+    'zerowaste',
+  ].map((name) => ({ name, over18: false })),
+);
 
 function tile(color: string, label: string, width = 128, height = 128): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${String(width)}" height="${String(height)}"><rect width="100%" height="100%" fill="${color}"/><text x="50%" y="52%" font-size="20" text-anchor="middle" fill="#888" font-family="sans-serif">${label}</text></svg>`;
@@ -271,7 +301,20 @@ const source: FeedSource = {
       throw new Error('Reddit refused: TOO_OLD (sample)');
     }
   },
-  title: 'Home',
+  title: feedTitle(FEED),
+  path: FEED,
+  async loadSubreddits() {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    if (params.get('subs') === 'error') {
+      throw new Error('HTTP 403 (sample)');
+    }
+    return params.get('subs') === 'none' ? [] : SAMPLE_SUBS;
+  },
+  // The preview has no Reddit pages: it reloads itself showing the new feed's name.
+  openFeed(path) {
+    params.set('feed', path);
+    window.location.replace(`?${params.toString()}`);
+  },
   redditUrl: '#',
   async load(after): Promise<FeedPage> {
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -279,7 +322,7 @@ const source: FeedSource = {
   },
 };
 
-const theme = new URLSearchParams(window.location.search).get('theme');
+const theme = params.get('theme');
 const host = mountReader(document.body, source, 'Preview with sample data', 'open');
 if (theme === 'dark' || theme === 'light') {
   host.dataset.theme = theme;
