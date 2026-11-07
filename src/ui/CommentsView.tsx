@@ -18,6 +18,7 @@ import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { VoteBar } from './ContentLayer';
 import { BackIcon, DownIcon, UpIcon } from './icons';
 import { PostMedia, PostText } from './PostMedia';
+import { SubredditLink } from './SubredditLink';
 import { useDialogKeys } from './useDialogKeys';
 
 /** What the comments view needs from Reddit (or from the preview's samples). */
@@ -287,7 +288,7 @@ export function CommentsView({
         <div class="head-title">
           <div class="meta">
             {post.over18 && <span class="tag">NSFW</span>}
-            <span>r/{post.subreddit}</span>
+            <SubredditLink name={post.subreddit} />
             <span class="dot-sep" aria-hidden="true" />
             <span>u/{post.author}</span>
             <span class="dot-sep" aria-hidden="true" />

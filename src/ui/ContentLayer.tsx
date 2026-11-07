@@ -9,6 +9,7 @@ import type { VoteButton } from '../lib/vote';
 import { isPlainClick } from './clicks';
 import { BackIcon, CommentIcon, DownIcon, UpIcon } from './icons';
 import { PostMedia } from './PostMedia';
+import { SubredditLink } from './SubredditLink';
 import { useDialogKeys } from './useDialogKeys';
 
 const REDDIT = 'https://old.reddit.com';
@@ -136,7 +137,7 @@ export function ContentLayer({
           <article class="layer-body">
             <div class="meta">
               {post.over18 && <span class="tag">NSFW</span>}
-              <span>r/{post.subreddit}</span>
+              <SubredditLink name={post.subreddit} />
               <span class="dot-sep" aria-hidden="true" />
               <span>u/{post.author}</span>
               <span class="dot-sep" aria-hidden="true" />

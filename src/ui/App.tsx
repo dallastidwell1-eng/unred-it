@@ -15,6 +15,7 @@ import { ContentLayer } from './ContentLayer';
 import { FeedPicker } from './FeedPicker';
 import { FeedRow } from './FeedRow';
 import { SearchCommunities } from './SearchCommunities';
+import { OpenPageContext, SubredditLink } from './SubredditLink';
 import { TopBar } from './TopBar';
 
 /** Where the data comes from: Reddit in the extension, samples in the preview. */
@@ -311,137 +312,152 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     };
   }, [status, loadMore]);
 
+  /** Opens another reader page as a new history entry (subreddit links). */
+  const openPage = useCallback(
+    (path: string) => {
+      go(path, false);
+    },
+    [go],
+  );
+
   const postFor = (fullname: string) => posts.find((p) => p.fullname === fullname);
   const voteFor = (post: Post) =>
     source.vote ? (pressed: VoteButton) => vote(post, pressed) : undefined;
 
   return (
-    <div class="app">
-      <TopBar
-        title={source.title}
-        pickerOpen={pickerOpen}
-        onPickerClick={togglePicker}
-        search={source.search ?? null}
-        searchIn={searchIn}
-        onSearch={(path) => {
-          go(path, false);
-        }}
-        account={account}
-        pinned={overlays.length > 0}
-      />
-      <main>
-        <h1 class="sr-only">{source.title}</h1>
-        {source.search && (
-          <div class="search-head">
-            <p>
-              Results for <strong>“{source.search.query}”</strong>
-              {source.search.subreddit && ` in r/${source.search.subreddit}`}
-            </p>
-            {source.search.subreddit && (
-              <a
-                href={searchPath(source.search.query, null)}
-                onClick={(event) => {
-                  if (isPlainClick(event)) {
-                    event.preventDefault();
-                    go(event.currentTarget.getAttribute('href') ?? '/', false);
-                  }
-                }}
-              >
-                Search all of Reddit
-              </a>
-            )}
-          </div>
-        )}
-        <SearchCommunities
-          items={communities}
-          hasPosts={posts.length > 0}
-          onOpen={(path) => {
+    <OpenPageContext.Provider value={openPage}>
+      <div class="app">
+        <TopBar
+          title={source.title}
+          pickerOpen={pickerOpen}
+          onPickerClick={togglePicker}
+          search={source.search ?? null}
+          searchIn={searchIn}
+          onSearch={(path) => {
             go(path, false);
           }}
+          account={account}
+          pinned={overlays.length > 0}
         />
-        <ul class="feed">
-          {posts.map((post) => (
-            <FeedRow
-              key={post.fullname}
-              post={post}
-              now={now}
-              onOpen={openPost}
-              onOpenComments={openComments}
-            />
-          ))}
-        </ul>
-        <div ref={sentinel} aria-live="polite">
-          {status === 'loading' && <p class="status">Loading…</p>}
-          {status === 'end' && (
-            <p class="status">
-              {posts.length > 0
-                ? 'You have reached the end.'
-                : source.search
-                  ? 'Nothing found.'
-                  : 'No posts here.'}
-            </p>
-          )}
-          {status === 'error' && (
-            <div class="status">
-              <p>Could not load the feed: {error}</p>
-              <button class="button" type="button" onClick={() => void loadMore()}>
-                Try again
-              </button>
+        <main>
+          <h1 class="sr-only">{source.title}</h1>
+          {source.search && (
+            <div class="search-head">
+              <p>
+                Results for <strong>“{source.search.query}”</strong>
+                {source.search.subreddit && (
+                  <>
+                    {' in '}
+                    <SubredditLink name={source.search.subreddit} />
+                  </>
+                )}
+              </p>
+              {source.search.subreddit && (
+                <a
+                  href={searchPath(source.search.query, null)}
+                  onClick={(event) => {
+                    if (isPlainClick(event)) {
+                      event.preventDefault();
+                      go(event.currentTarget.getAttribute('href') ?? '/', false);
+                    }
+                  }}
+                >
+                  Search all of Reddit
+                </a>
+              )}
             </div>
           )}
-        </div>
-      </main>
-      <footer class="footer">
-        <a href={source.redditUrl}>Open Reddit's own page</a>
-        {note && <p>{note}</p>}
-      </footer>
-      {overlays.map((overlay, index) => {
-        const active = index === overlays.length - 1;
-        const key = `${overlay.kind}-${overlay.fullname}-${String(index)}`;
-        if (overlay.kind === 'picker') {
+          <SearchCommunities
+            items={communities}
+            hasPosts={posts.length > 0}
+            onOpen={(path) => {
+              go(path, false);
+            }}
+          />
+          <ul class="feed">
+            {posts.map((post) => (
+              <FeedRow
+                key={post.fullname}
+                post={post}
+                now={now}
+                onOpen={openPost}
+                onOpenComments={openComments}
+              />
+            ))}
+          </ul>
+          <div ref={sentinel} aria-live="polite">
+            {status === 'loading' && <p class="status">Loading…</p>}
+            {status === 'end' && (
+              <p class="status">
+                {posts.length > 0
+                  ? 'You have reached the end.'
+                  : source.search
+                    ? 'Nothing found.'
+                    : 'No posts here.'}
+              </p>
+            )}
+            {status === 'error' && (
+              <div class="status">
+                <p>Could not load the feed: {error}</p>
+                <button class="button" type="button" onClick={() => void loadMore()}>
+                  Try again
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+        <footer class="footer">
+          <a href={source.redditUrl}>Open Reddit's own page</a>
+          {note && <p>{note}</p>}
+        </footer>
+        {overlays.map((overlay, index) => {
+          const active = index === overlays.length - 1;
+          const key = `${overlay.kind}-${overlay.fullname}-${String(index)}`;
+          if (overlay.kind === 'picker') {
+            return (
+              <FeedPicker
+                key={key}
+                current={currentFeed(source.path)}
+                loadSubreddits={loadSubreddits}
+                onChoose={chooseFeed}
+                onClose={closeTop}
+                active={active}
+              />
+            );
+          }
+          const post = postFor(overlay.fullname);
+          if (!post) {
+            return null;
+          }
+          if (overlay.kind === 'post') {
+            return (
+              <ContentLayer
+                key={key}
+                post={post}
+                now={now}
+                active={active}
+                onClose={closeTop}
+                onVote={voteFor(post)}
+                onOpenComments={(from) => {
+                  openComments(post, from);
+                }}
+              />
+            );
+          }
           return (
-            <FeedPicker
-              key={key}
-              current={currentFeed(source.path)}
-              loadSubreddits={loadSubreddits}
-              onChoose={chooseFeed}
-              onClose={closeTop}
-              active={active}
-            />
-          );
-        }
-        const post = postFor(overlay.fullname);
-        if (!post) {
-          return null;
-        }
-        if (overlay.kind === 'post') {
-          return (
-            <ContentLayer
+            <CommentsView
               key={key}
               post={post}
               now={now}
               active={active}
+              backLabel={overlays[index - 1]?.kind === 'post' ? 'Post' : 'Feed'}
+              source={source}
               onClose={closeTop}
-              onVote={voteFor(post)}
-              onOpenComments={(from) => {
-                openComments(post, from);
-              }}
+              onVotePost={voteFor(post)}
             />
           );
-        }
-        return (
-          <CommentsView
-            key={key}
-            post={post}
-            now={now}
-            active={active}
-            backLabel={overlays[index - 1]?.kind === 'post' ? 'Post' : 'Feed'}
-            source={source}
-            onClose={closeTop}
-            onVotePost={voteFor(post)}
-          />
-        );
-      })}
-    </div>
+        })}
+      </div>
+    </OpenPageContext.Provider>
   );
 }

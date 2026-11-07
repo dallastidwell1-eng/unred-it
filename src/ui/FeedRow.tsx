@@ -4,6 +4,7 @@ import { formatAge, formatCount } from '../lib/format';
 import type { Post } from '../lib/reddit-data';
 import { isPlainClick } from './clicks';
 import { CommentIcon, DownIcon, LinesIcon, LinkIcon, UpIcon } from './icons';
+import { SubredditLink } from './SubredditLink';
 
 export function FeedRow({
   post,
@@ -57,7 +58,7 @@ export function FeedRow({
         <div class="meta">
           {post.stickied && <span class="tag">Pinned</span>}
           {post.over18 && <span class="tag">NSFW</span>}
-          <span>r/{post.subreddit}</span>
+          <SubredditLink name={post.subreddit} />
           <span class="dot-sep" aria-hidden="true" />
           <span>{formatAge(post.createdUtc, now)}</span>
           <span class="dot-sep" aria-hidden="true" />
