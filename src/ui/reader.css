@@ -609,6 +609,63 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+.vote-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: -12px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-button:disabled {
+  cursor: default;
+}
+
+/* The arrow has the vote color in both themes; the score follows rules 4 and 5. */
+.vote-group.up .vote-up {
+  color: var(--up);
+}
+
+.vote-group.down .vote-down {
+  color: var(--down);
+}
+
+.vote-score {
+  min-width: 28px;
+  padding: var(--chip-pad);
+  border-radius: 7px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.vote-group.up .vote-score {
+  color: var(--up-fg);
+  background: var(--up-bg);
+}
+
+.vote-group.down .vote-score {
+  color: var(--down-fg);
+  background: var(--down-bg);
+}
+
+.action-error {
+  margin: 8px 20px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .action-link {
   display: inline-flex;
   align-items: center;

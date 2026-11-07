@@ -287,3 +287,8 @@ Source: session 002, owner: "buttons on both PC and Phone, no swipe".
 Date: 2026-11-06 · Decider: owner (from his test), detail by Claude
 Decision: Pictures in the content layer are never cropped to a strip. The link card shows its preview image at the image's own proportions (no fixed 170 px height), and image posts show without grey side bars; both are capped at 70% of the screen height. layout-spec.md 5.4 "image (170 px)" is replaced by this.
 Source: session 002, owner: "Weird landscaped thumbnail".
+
+### D-057: Voting moves into M4's content layer; video and GIF players always show controls
+Date: 2026-11-06 · Decider: owner (from his test: "Upvote is not working and there is no downvote"; "Gifs need a progress bar")
+Decision: The opened post's action bar has working Upvote and Downvote buttons now (pulled forward from M5; save and share stay in M5). The vote shows at once and is sent with src/lib/reddit-client.ts (form plus modhash, D-047; the modhash is fetched again once after a 403); if Reddit refuses, the post goes back to how it was and a short message says why. GIF-style clips and animated gallery pictures show the browser's player controls (progress bar, seek), and still loop without sound.
+Source: session 002, owner test of the content layer.

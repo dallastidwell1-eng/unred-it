@@ -3,6 +3,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { FeedPage, Post } from '../lib/reddit-data';
+import type { VoteDirection } from '../lib/reddit-data';
+import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { ContentLayer } from './ContentLayer';
 import { ChevronDownIcon } from './icons';
 import { FeedRow } from './FeedRow';
@@ -14,6 +16,8 @@ export interface FeedSource {
   /** Reddit's own page for this feed (the escape hatch). */
   redditUrl: string;
   load(after: string | null): Promise<FeedPage>;
+  /** Sends a vote as the logged-in user. Missing where voting is not possible. */
+  vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
 }
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
@@ -68,6 +72,28 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
       setOpenPost(null);
     }
   }, []);
+
+  /** Shows the vote at once, sends it, and puts the post back if Reddit says no. */
+  const vote = useCallback(
+    async (post: Post, pressed: VoteButton) => {
+      if (!source.vote) {
+        return;
+      }
+      const updated = applyVote(post, directionFor(post.likes, pressed));
+      const show = (next: Post) => {
+        setPosts((list) => list.map((p) => (p.fullname === next.fullname ? next : p)));
+        setOpenPost((open) => (open?.fullname === next.fullname ? next : open));
+      };
+      show(updated);
+      try {
+        await source.vote(post.fullname, directionFor(post.likes, pressed));
+      } catch (error) {
+        show(post);
+        throw error;
+      }
+    },
+    [source],
+  );
 
   // Back and Forward open and close the layer.
   useEffect(() => {
@@ -179,7 +205,14 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         <a href={source.redditUrl}>Open Reddit's own page</a>
         {note && <p>{note}</p>}
       </footer>
-      {openPost && <ContentLayer post={openPost} now={now} onClose={close} />}
+      {openPost && (
+        <ContentLayer
+          post={openPost}
+          now={now}
+          onClose={close}
+          onVote={source.vote ? (pressed) => vote(openPost, pressed) : undefined}
+        />
+      )}
     </div>
   );
 }

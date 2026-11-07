@@ -13,3 +13,7 @@ Rule: add every new D-### (and OQ-###, L-##) after the last entry in its file, t
 ### L-02: Do not write files through bash heredocs that contain apostrophes
 Source: session 001, 2026-11-06: a bash heredoc containing apostrophes failed to parse in the Bash tool, so nothing was written.
 Rule: write and edit files with the editor tools (Write, Edit), not shell heredocs.
+
+### L-03: Edit code with the Edit tool, not scripted find-and-replace
+Source: session 002, 2026-11-06: two scripted edits went wrong. A Python edit turned "\n" inside a TypeScript string into a real line break (broken file), and Python's str.replace removed a line in two places instead of one (a component lost its variable). Lint caught both before any test.
+Rule: change source files with the Edit tool, which needs one exact, unique match. Scripted edits only for mechanical changes that are checked right after (grep or lint).

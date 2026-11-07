@@ -2,22 +2,92 @@
 // The feed stays mounted underneath, so its place never changes (D-021).
 // Voting, saving and sharing come in M5; comments view later in M4.
 
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { formatAge, formatCount } from '../lib/format';
 import type { Post } from '../lib/reddit-data';
+import type { VoteButton } from '../lib/vote';
 import { BackIcon, CommentIcon, DownIcon, UpIcon } from './icons';
 import { PostMedia } from './PostMedia';
 
 const REDDIT = 'https://old.reddit.com';
 
+/** Upvote, score, downvote (layout-spec 5.4; colors: color-spec rules 4 and 5). */
+function VoteBar({
+  post,
+  onVote,
+}: {
+  post: Post;
+  onVote?: (pressed: VoteButton) => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const vote = post.likes === true ? 'up' : post.likes === false ? 'down' : '';
+  const press = (pressed: VoteButton) => {
+    if (!onVote || busy) {
+      return;
+    }
+    setBusy(true);
+    setError('');
+    onVote(pressed)
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : String(cause));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
+
+  return (
+    <>
+      <div class={`vote-group ${vote}`}>
+        <button
+          type="button"
+          class="icon-button vote-up"
+          aria-label={post.likes === true ? 'Remove upvote' : 'Upvote'}
+          aria-pressed={post.likes === true}
+          disabled={!onVote}
+          onClick={() => {
+            press('up');
+          }}
+        >
+          <UpIcon size={20} />
+        </button>
+        <span class="vote-score">
+          <span class="sr-only">Score </span>
+          {formatCount(post.score)}
+        </span>
+        <button
+          type="button"
+          class="icon-button vote-down"
+          aria-label={post.likes === false ? 'Remove downvote' : 'Downvote'}
+          aria-pressed={post.likes === false}
+          disabled={!onVote}
+          onClick={() => {
+            press('down');
+          }}
+        >
+          <DownIcon size={20} />
+        </button>
+      </div>
+      {error && (
+        <p class="action-error" role="alert">
+          Vote not sent: {error}
+        </p>
+      )}
+    </>
+  );
+}
+
 export function ContentLayer({
   post,
   now,
   onClose,
+  onVote,
 }: {
   post: Post;
   now: number;
   onClose: () => void;
+  onVote?: (pressed: VoteButton) => Promise<void>;
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
@@ -63,8 +133,6 @@ export function ContentLayer({
     };
   }, [onClose]);
 
-  const vote = post.likes === true ? 'up' : post.likes === false ? 'down' : '';
-
   return (
     <div class="layer-root">
       <div class="scrim" onClick={onClose} />
@@ -99,11 +167,7 @@ export function ContentLayer({
             <PostMedia post={post} />
           </article>
           <div class="action-bar">
-            <span class={`score ${vote}`}>
-              {vote === 'down' ? <DownIcon size={18} /> : <UpIcon size={18} />}
-              <span class="sr-only">Score </span>
-              {formatCount(post.score)}
-            </span>
+            <VoteBar post={post} onVote={onVote} />
             <a class="action-link" href={`${REDDIT}${post.permalink}`}>
               <CommentIcon size={18} />
               {formatCount(post.numComments)}

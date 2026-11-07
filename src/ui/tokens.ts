@@ -159,11 +159,11 @@ export function themeVariables(theme: ThemeName): string {
   if (theme === 'dark') {
     lines.push('--up-fg: var(--up);', '--up-bg: transparent;');
     lines.push('--down-fg: var(--down);', '--down-bg: transparent;');
-    lines.push('--vote-pad-x: 0px;');
+    lines.push('--vote-pad-x: 0px;', '--chip-pad: 0;');
   } else {
     lines.push('--up-fg: var(--on-vote);', '--up-bg: var(--up);');
     lines.push('--down-fg: var(--on-vote);', '--down-bg: var(--down);');
-    lines.push('--vote-pad-x: 6px;');
+    lines.push('--vote-pad-x: 6px;', '--chip-pad: 3px 8px;');
   }
   return lines.join('\n');
 }

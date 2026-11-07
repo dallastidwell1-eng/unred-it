@@ -3,6 +3,7 @@
 
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import { feedJsonPath, feedTitle, isFeedPath, readerTurnedOff } from '../lib/feed-route';
+import { createRedditClient } from '../lib/reddit-client';
 import { parseFeedPage } from '../lib/reddit-data';
 import type { FeedSource } from '../ui/App';
 import { loadFonts } from '../ui/fonts';
@@ -28,7 +29,9 @@ function redditSource(): FeedSource {
   const { pathname, search } = window.location;
   const off = new URLSearchParams(search);
   off.set('unred', 'off');
+  const client = createRedditClient((url, init) => fetch(url, init));
   return {
+    vote: (fullname, dir) => client.vote(fullname, dir),
     title: feedTitle(pathname),
     redditUrl: `${pathname}?${off.toString()}`,
     async load(after) {

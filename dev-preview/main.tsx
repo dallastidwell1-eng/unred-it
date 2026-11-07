@@ -166,6 +166,13 @@ const PAGE_2: Post[] = Array.from({ length: 6 }, (_, i) =>
 );
 
 const source: FeedSource = {
+  // A pretend vote: one sample post shows what a refused vote looks like.
+  async vote(fullname) {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    if (fullname === 't3_sample4') {
+      throw new Error('Reddit refused: TOO_OLD (sample)');
+    }
+  },
   title: 'Home',
   redditUrl: '#',
   async load(after): Promise<FeedPage> {

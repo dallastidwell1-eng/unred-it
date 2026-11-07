@@ -94,7 +94,7 @@ export function VideoPlayer({
         ref={element}
         class="media-frame"
         style={{ aspectRatio: ratio }}
-        controls={!video.isGif}
+        controls
         playsInline
         preload="metadata"
         poster={poster ?? undefined}
@@ -138,7 +138,7 @@ export function Gallery({ items }: { items: GalleryItem[] }) {
         }}
       >
         {item.isVideo ? (
-          <video key={item.url} src={item.url} autoPlay loop muted playsInline />
+          <video key={item.url} src={item.url} controls autoPlay loop muted playsInline />
         ) : (
           <img
             key={item.url}
