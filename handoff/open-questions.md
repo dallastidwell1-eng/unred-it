@@ -50,13 +50,13 @@ Answer:
 Status: closed · Owner: Claude, technical spike in M1 · Opened: 2026-11-06, session 001
 Answer: Yes for reads and votes. Spike run by the owner in his logged-in Firefox 159 desktop, session 002, 2026-11-06 21:27: the content script's own fetch (with host permission, credentials included) read /api/me.json (logged in, modhash present), the front page /.json (10 posts) and one post with its comments as data (13 of 13 comments, nested depth kept); POST /api/vote with the modhash upvoted the owner-chosen post (likes null to true) and undid it (true to null). Firefox's content.fetch was not reachable from the WXT content script; it is not needed. Reads returned no rate-limit headers; the vote replies did (used 3 to 4, remaining about 1997, reset about 180 s). Saves and comments use the same form-plus-modhash pattern but were not tested (M5/M6). Whether this counts as Data API use under Reddit's terms is not answered: moved to OQ-014. Needed by D-021; D-047 records the data path. (Was in OQ-012 by mistake: the fallback, had this failed, was restyle and rearrange on old.reddit.com pages with reduced "keep your place".)
 
-### OQ-013: Which dark ground (Deep #1A1A1A, Dim #202020, Soft #262626, Softer #2C2C2C), light ground (Paper #FAFAFA, Mist #F3F3F3, Cloud #ECECEC), blue (dusty, steel, navy), brass (pale, classic, antique) and red (brick, signal)? (Revised after D-032; copper dropped.)
-Status: closed · Owner: owner, from the color mixer on the mock-up canvas · Opened: 2026-11-06, session 001
-Answer: Deep and Paper grounds, dusty blue, pale brass / brick in dark, bright brass / bright red chips in light. Owner approved as final, session 001, 2026-11-06. See D-035 and design/color-spec.md.
-
 ### OQ-012: Is the account page (history, saved, inbox) rebuilt in the extension's style, or Reddit's own old.reddit.com page restyled? Claude's default: rebuilt, for consistency.
 Status: closed · Owner: owner, in M3 · Opened: 2026-11-06, session 001
 Answer: Hybrid: frequent screens rebuilt, rare Reddit settings open Reddit's page in a new tab; History = posts opened; Inbox = full messaging. Owner, session 001, 2026-11-06. See D-038 to D-040.
+
+### OQ-013: Which dark ground (Deep #1A1A1A, Dim #202020, Soft #262626, Softer #2C2C2C), light ground (Paper #FAFAFA, Mist #F3F3F3, Cloud #ECECEC), blue (dusty, steel, navy), brass (pale, classic, antique) and red (brick, signal)? (Revised after D-032; copper dropped.)
+Status: closed · Owner: owner, from the color mixer on the mock-up canvas · Opened: 2026-11-06, session 001
+Answer: Deep and Paper grounds, dusty blue, pale brass / brick in dark, bright brass / bright red chips in light. Owner approved as final, session 001, 2026-11-06. See D-035 and design/color-spec.md.
 
 ### OQ-014: Do Reddit's Data API Terms, Developer Terms or User Agreement cover a personal browser extension that reads the logged-in user's own pages as .json and sends the user's own votes (no API key, no OAuth app, no server)? Does it matter for an AMO listing?
 Status: open · Owner: owner to read or paste the terms (Claude's fetch tools and browser are blocked from redditinc.com and the Reddit help center); before M8 (public listing) · Opened: 2026-11-06, session 002

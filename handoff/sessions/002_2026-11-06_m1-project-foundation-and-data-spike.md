@@ -1,7 +1,7 @@
 # Session 002: M1 project foundation and data spike
 
-Status: in progress
-Date: 2026-11-06 · Started 20:58 · Closed HH:MM
+Status: closed
+Date: 2026-11-06 · Started 20:58 · Closed 23:46
 Chat: Claude desktop app (Code tab), Opus 5.5 (claude-opus-5-5)
 Kickoff: handoff/kickoffs/session-002-kickoff.md
 
@@ -46,29 +46,99 @@ Scope change (owner, 21:46): with M1 done, the owner said to keep going ("Prep M
 28. 23:37 Owner: push now and end the session here; next M4 piece is the feed picker (layout-spec 5.6), for the next session.
 29. 23:38 Pushed 222a91f (checks first: username 0, `hk scan` clean, `npm run check` ok). CI run 42347832164 passed in 31 s.
 
+30. 23:43 Close (/handoff:handoff): todo.md updated (M2 prep and spike removal, M4 progress and order of the rest, M5 voting done, M8 pre-submission items); OQ-012/OQ-013 put back in order (left from session 001); layout-spec 5.4 updated for D-054 to D-056; session 003 kickoff and start prompt written; START_HERE rewritten.
+
 ## Decisions
-<D-### numbers added to handoff/decisions.md this session, one line each; or "none".>
+- D-043 License: MIT (closes OQ-008).
+- D-044 M1 dev packages approved (wxt, vite, typescript 6.0, eslint, @eslint/js, typescript-eslint, prettier, vitest, web-ext).
+- D-045 Add-on ID `unred-it@praxisdesignworks`; LICENSE copyright "Dallas Tidwell".
+- D-046 Manifest V3 for Firefox (min Firefox 140 desktop, 142 Android).
+- D-047 Data path: content script fetches Reddit's .json pages and posts to Reddit's form endpoints with the modhash.
+- D-048 Public repository with a fresh history; references/ local only; old history in a local backup branch.
+- D-049 Signing runs on the owner's machine with the owner's keys (scripts/sign.mjs).
+- D-050 UI library: Preact.
+- D-051 Fonts bundled: Inter and Inter Tight.
+- D-052 Post/comment HTML cleaned by our own allow-list.
+- D-053 happy-dom for DOM unit tests.
+- D-054 Videos play in the reader; hls.js (full build) for sound; host permission v.redd.it.
+- D-055 Galleries: one picture at a time, Previous/Next buttons, no swipe.
+- D-056 Media keeps its own shape (changes layout-spec 5.4).
+- D-057 Voting moved into M4's content layer and comments; GIF clips show player controls.
 
 ## Verification
-<What was checked at close and how: which snapshot lines changed as expected, what the owner confirmed. A command that "should have worked" is not verification.>
+Snapshot taken 2026-11-06 23:45, compared with the session 001 close (20:52):
+- decisions: expected 42 + 15 (D-043 to D-057) = 57 → snapshot shows 57. Order checked by script: D-000 to D-057 with no gap.
+- open_questions: expected 8 − 3 closed (OQ-008, OQ-011, OQ-001) + 1 opened (OQ-014) = 6 → snapshot shows 6. Order checked: OQ-000 to OQ-014 in sequence (OQ-012/013 fixed at close).
+- lessons: expected 2 + 1 (L-03) = 3 → snapshot shows 3.
+- fp_config: this session did not change CLAUDE.md, .claude/settings.json, handoff/config.json or the templates (it added .claude/launch.json, which is not fingerprinted) → unchanged at 984bd33a2180, as expected.
+- base_commit 47f7582 is the 23:38 autosave, as expected (the close commit comes after). The commit history was replaced by a fresh one (D-048), so session 001's base c5d5fb8 is only in `backup/pre-public-2026-11-06`; this close snapshot is the new baseline for session 003.
+- working_tree 7 changed = the close edits (session log, START_HERE, todo, open-questions, layout-spec, the two session-003 kickoff files); committed in the close commit.
+- GitHub: master at 222a91f pushed, CI run 42347832164 green (`gh run watch --exit-status` exit 0). The autosave and close commits after it are local (push is off; pushing needs the owner, D-009).
+- The owner confirmed in his Firefox: marker, spike read and vote (seen on Reddit), rebuilt feed, content layer, galleries, video with sound, voting on posts and comments, GIF seek bar, comments view and its new top ("Looks right").
+- Not verified: the bundled Inter font in Firefox (owner has not reported the footer line); everything on the phone (needs M2); OQ-014 (Reddit's terms).
 
 ## Found along the way
-<Problems or facts found that were not the goal; or "none".>
+Each item names where it is carried forward.
+- typescript-eslint 8 supports TypeScript only below 6.1, so TypeScript 7 cannot be used yet. Carried: D-044.
+- Firefox's `content.fetch` is not reachable from a WXT content script; the content script's own fetch with host permission works and sends the user's cookies. Carried: OQ-011 answer, D-047.
+- Reddit's rate-limit headers appear on /api/vote replies (about 2,000 per window, reset about 180 s), not on .json reads. Carried: OQ-011 answer.
+- Claude's tools cannot read redditinc.com or the Reddit help center (WebFetch refuses, 403, browser blocks). Carried: OQ-014 (owner).
+- The owner's Reddit username was in one local autosave commit; the public repo was started from a fresh history. Carried: D-048; backup branch `backup/pre-public-2026-11-06` named in START_HERE.
+- `npm audit`: 14+ low/moderate warnings, all in dev tools (addons-linter, eslint's minimatch), none shipped. Carried: todo M8.
+- web-ext lint gives one warning: innerHTML inside Preact's runtime (a feature our code never uses). Carried: todo M8 (reviewer note).
+- hls.js light build has no alternate-audio, so Reddit videos were silent; the full build fixed it (reader.js about 620 kB). Carried: D-054, todo M8 (size).
+- History entries survive a reload, so Back reopened old posts; fixed with a per-page-load ID. No follow-up needed.
+- In a shadow root, host conditions need `:host([attr])`, not `:host[attr]`. Fixed in tokens.ts; no follow-up needed.
+- WXT's public folder is the project root's `public/`, not `src/public/`. Fixed; no follow-up needed.
+- The built-in browser's screenshots often show a stale, half-faded frame and its phone emulation crops the right edge; measurements in the page are reliable. No follow-up needed (method note, kept in this log).
+- Extension Workshop pages do not say whether one add-on ID can hold listed and unlisted versions. Carried: OQ-002 (owner confirms at the first upload).
+- Mozilla's docs: Android installs a signed .xpi via Settings > About Firefox (tap logo 5 times) > Install Extension from File. Carried: docs/releasing.md.
+- Two scripted edits broke code (a "\n" turned into a line break; str.replace removed two copies). Carried: lesson L-03.
+- OQ-012 and OQ-013 were out of order in open-questions.md (from session 001). Fixed at close; no follow-up needed.
 
 ## Judgment calls
-<Choices made without asking the owner, each with the reason, so the owner can overrule them; or "none".>
+Each item names where it is carried forward; the owner can overrule any.
+- Manifest V3 instead of WXT's Firefox default V2. Carried: D-046.
+- Host permissions https only, for old., www. and bare reddit.com (plus v.redd.it later, approved). Carried: wxt.config.ts, D-046, D-054.
+- The reader takes over only feed pages for now (front page, sorts, subreddits); post and other pages keep Reddit's view until D-027 is built. Carried: todo M4 item (3).
+- Closed shadow root for the reader (open only in the developer preview). Carried: src/ui/mount.tsx comment; no follow-up needed.
+- Fonts loaded with FontFace from the extension's own files (no web_accessible_resources). Carried: D-051; footer font check in todo M4 clean-up.
+- Sign script always uploads the sources zip, even for unlisted builds. Carried: D-049, OQ-001 answer.
+- Votes show at once and revert if Reddit refuses; the modhash is fetched again once after a 403. Carried: D-057.
+- Comments: load 200 at first, "more" in batches of 100; indentation stops growing after 6 levels on a phone. Carried: src/lib/thread-loader.ts and reader.css; no follow-up needed unless the owner wants it changed.
+- The gallery frame keeps the tallest picture's shape so the buttons never move, with no grey background (D-056). Carried: D-055, D-056.
+- The post's video pauses when the comments cover it. No follow-up needed.
+- A developer preview with sample data (dev-preview/, .claude/launch.json "reader-preview") for Claude's own visual checks. Carried: session 003 kickoff.
 
 ## State at close
-<Filled by the snapshot command at close.>
+<!-- SNAPSHOT START -->
+```
+taken_at: 2026-11-06 23:45 -0700
+branch: master
+base_commit: 47f758258d9f
+base_subject: autosave (turn): 2026-11-06 23:38
+working_tree: 7 changed
+fp_config: 984bd33a2180 (6 files)
+decisions: 57
+open_questions: 6
+lessons: 3
+autosave_last: 2026-11-06 23:38:23 turn head=47f7582 push=off
+```
+<!-- SNAPSHOT END -->
 
 ## Open questions
-<OQ-### numbers opened or closed this session; or "none".>
+Closed: OQ-008 (MIT, D-043), OQ-011 (reads and votes work, D-047), OQ-001 (AMO source rules met, D-049). Opened: OQ-014 (Reddit's terms; owner). Partly answered, still open: OQ-002 (confirm at the first upload). Still open from session 001: OQ-003, OQ-006, OQ-009, OQ-010. Open now: 6.
 
 ## Owner follow-throughs
-<What the owner owes: reviews, logins, answers, manual steps; or "none".>
+Each item names where it is carried forward.
+- Create the Mozilla (AMO) developer account and API keys, keep them yourself; then run `npm run sign:unlisted` per docs/releasing.md. Carried: todo M2, START_HERE.
+- Read Reddit's Data API Terms and Developer Terms (or paste them) for OQ-014, before M8. Carried: OQ-014, START_HERE.
+- Look at the bottom of the feed and report the "Font: …" line, so it can be removed. Carried: todo M4 clean-up, session 003 kickoff.
+- Approve each future push to GitHub (D-009). Carried: D-009, session 003 kickoff.
+- When convenient: OQ-003 (Lauren's PC browser), OQ-006 (plan if old.reddit.com goes away); decide on the handoff rules reminder. Carried: open-questions.md, todo.md, START_HERE.
 
 ## Lessons
-<New binding lessons added to handoff/lessons.md; or "none".>
+- L-03 Edit code with the Edit tool, not scripted find-and-replace.
 
 ## Next
-<The single next step, stated so that a fresh session can start it without asking. Name the next session number and its kickoff file.>
+Session 003: continue M4 with the feed picker (layout-spec 5.6): the "Home ⌄" button opens a sheet with a filter field, Home / Popular / All chips and the user's subscribed subreddits, and switching feeds stays inside the reader. Kickoff: handoff/kickoffs/session-003-kickoff.md; start prompt: handoff/kickoffs/session-003-start-prompt.md.

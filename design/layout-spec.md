@@ -101,7 +101,8 @@ The content layer covers the feed with a scrim (see color spec). The feed stays 
 - Meta line, then title (8 px above, 16 px below), then content:
   - Image: radius 12, full width (300 px tall placeholder on phone; real images use their own ratio, max height 70% of the viewport **[P]**).
   - Text: body style.
-  - Link: preview card (radius 14) with image (170 px), source, title, summary, and one full-width "Open article" button 44 px high that opens a new tab (D-025).
+  - Link: preview card (radius 14) with image (at its own proportions, capped at 70% of the viewport height; D-056 replaced the fixed 170 px), source, title, summary, and one full-width "Open article" button 44 px high that opens a new tab (D-025).
+  - Image posts show without side bars; galleries show one picture at a time with Previous/Next buttons and a counter (D-055); Reddit videos play in place, with sound (D-054).
 - Action bar: 52 px high, hairlines above and below. Order: upvote, score, downvote, comment-count button, flexible space, save, share. Each icon button 44 x 44.
 - Vote display: see color spec section "Rules" 4 and 5. Score chip padding 3 x 8 px, radius 7.
 
