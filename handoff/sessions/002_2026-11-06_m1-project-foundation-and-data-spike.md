@@ -44,6 +44,7 @@ Scope change (owner, 21:46): with M1 done, the owner said to keep going ("Prep M
 26. 23:34 Owner tested the comments view on real threads: "Works nicely!"; asked for the post up top. Chose "Both": the subreddit, author, age and title now sit in the comments view's top bar beside the back button (title clamped to 2 lines), and the post itself (picture, video, gallery, text or link card) shows above the vote row and sort bar. The opened post's video pauses when the comments cover it. Checked: `npm run check` exit 0 (84/84); preview at 1280 px (screenshot) and 375 px (measured: bar 69 px with a 2-line clamped title, post text at the 16 px gutter, no sideways scroll).
 27. 23:36 Owner checked the new comments page top in Firefox: "Looks right".
 28. 23:37 Owner: push now and end the session here; next M4 piece is the feed picker (layout-spec 5.6), for the next session.
+29. 23:38 Pushed 222a91f (checks first: username 0, `hk scan` clean, `npm run check` ok). CI run 42347832164 passed in 31 s.
 
 ## Decisions
 <D-### numbers added to handoff/decisions.md this session, one line each; or "none".>
