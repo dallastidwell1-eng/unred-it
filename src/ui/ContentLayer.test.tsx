@@ -28,6 +28,8 @@ function post(partial: Partial<Post>): Post {
     previewImage: null,
     isVideo: false,
     isGallery: false,
+    video: null,
+    gallery: null,
     ...partial,
   };
 }
@@ -92,5 +94,36 @@ describe('ContentLayer', () => {
     box.querySelector<HTMLButtonElement>('.back')?.click();
     box.querySelector<HTMLDivElement>('.scrim')?.click();
     expect(onClose).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('gallery in the content layer', () => {
+  const pic = (n: number, height = 100) => ({
+    url: `https://i.redd.it/${String(n)}.jpg`,
+    width: 100,
+    height,
+    caption: n === 2 ? 'Second' : '',
+    isVideo: false,
+  });
+
+  it('shows one picture at a time with working buttons and a counter', () => {
+    const { box } = show(post({ isGallery: true, gallery: [pic(1), pic(2, 300), pic(3)] }));
+    const count = () => box.querySelector('.gallery-count')?.textContent;
+    const src = () => box.querySelector('.gallery-frame img')?.getAttribute('src');
+    const [previous, next] = Array.from(box.querySelectorAll<HTMLButtonElement>('.gallery-button'));
+    expect(count()).toBe('1 / 3');
+    expect(previous?.disabled).toBe(true);
+    void act(() => {
+      next?.click();
+    });
+    expect(count()).toBe('2 / 3');
+    expect(src()).toBe('https://i.redd.it/2.jpg');
+    expect(box.querySelector('.gallery-caption')?.textContent).toBe('Second');
+    void act(() => {
+      next?.click();
+    });
+    expect(next?.disabled).toBe(true);
+    // The frame keeps the tallest picture's shape (100 x 300).
+    expect(box.querySelector<HTMLElement>('.gallery-frame')?.style.aspectRatio).toBe('100 / 300');
   });
 });

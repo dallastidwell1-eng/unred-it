@@ -31,6 +31,30 @@ export interface Post {
   previewImage: PreviewImage | null;
   isVideo: boolean;
   isGallery: boolean;
+  /** A Reddit-hosted video (also GIF-style clips), or null. */
+  video: VideoInfo | null;
+  /** The pictures of a gallery post, in order, or null. */
+  gallery: GalleryItem[] | null;
+}
+
+export interface VideoInfo {
+  /** Picture and sound (needs a stream player, D-054). */
+  hlsUrl: string | null;
+  /** Picture only, plays anywhere. */
+  mp4Url: string | null;
+  width: number;
+  height: number;
+  /** A GIF-style clip: loops, no sound. */
+  isGif: boolean;
+}
+
+export interface GalleryItem {
+  url: string;
+  width: number;
+  height: number;
+  caption: string;
+  /** An animated picture, delivered as an MP4. */
+  isVideo: boolean;
 }
 
 export interface PreviewImage {
@@ -116,7 +140,103 @@ function toPost(data: Record<string, unknown>): Post {
     previewImage: previewFrom(data.preview),
     isVideo: data.is_video === true,
     isGallery: data.is_gallery === true,
+    video: videoFrom(data),
+    gallery: galleryFrom(data),
   };
+}
+
+function httpsOrNull(value: string): string | null {
+  return value.startsWith('https://') ? value : null;
+}
+
+/** The first crossposted original, where crossposts keep their media. */
+function crosspostParent(data: Record<string, unknown>): Record<string, unknown> | null {
+  const list = data.crosspost_parent_list;
+  const first: unknown = Array.isArray(list) ? list[0] : null;
+  return isRecord(first) ? first : null;
+}
+
+function redditVideoFrom(value: unknown): VideoInfo | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const hlsUrl = httpsOrNull(str(value, 'hls_url'));
+  const mp4Url = httpsOrNull(str(value, 'fallback_url'));
+  if (!hlsUrl && !mp4Url) {
+    return null;
+  }
+  return {
+    hlsUrl,
+    mp4Url,
+    width: num(value, 'width'),
+    height: num(value, 'height'),
+    isGif: value.is_gif === true,
+  };
+}
+
+/** Reddit's own video: post media first, then the GIF-style preview, then a crosspost's. */
+function videoFrom(data: Record<string, unknown>, depth = 0): VideoInfo | null {
+  for (const key of ['secure_media', 'media']) {
+    const media = data[key];
+    const video = isRecord(media) ? redditVideoFrom(media.reddit_video) : null;
+    if (video) {
+      return video;
+    }
+  }
+  const preview = data.preview;
+  const clip = isRecord(preview) ? redditVideoFrom(preview.reddit_video_preview) : null;
+  if (clip) {
+    return { ...clip, isGif: true };
+  }
+  const parent = depth === 0 ? crosspostParent(data) : null;
+  return parent ? videoFrom(parent, 1) : null;
+}
+
+function galleryItemFrom(item: unknown, metadata: Record<string, unknown>): GalleryItem | null {
+  if (!isRecord(item)) {
+    return null;
+  }
+  const meta = metadata[str(item, 'media_id')];
+  if (!isRecord(meta) || meta.status !== 'valid' || !isRecord(meta.s)) {
+    return null;
+  }
+  const source = meta.s;
+  const width = num(source, 'x');
+  const height = num(source, 'y');
+  const caption = str(item, 'caption');
+  if (meta.e === 'AnimatedImage') {
+    const mp4 = httpsOrNull(str(source, 'mp4'));
+    const gif = httpsOrNull(str(source, 'gif'));
+    const url = mp4 ?? gif;
+    return url ? { url, width, height, caption, isVideo: mp4 !== null } : null;
+  }
+  if (meta.e !== 'Image') {
+    return null;
+  }
+  // A display-size version when Reddit made one; otherwise the original.
+  const sizes = Array.isArray(meta.p) ? meta.p.filter(isRecord) : [];
+  const fitting = sizes.filter((size) => num(size, 'x') <= PREVIEW_MAX_WIDTH);
+  const pick = width > PREVIEW_MAX_WIDTH ? fitting.at(-1) : undefined;
+  const url = httpsOrNull(str(pick ?? source, 'u'));
+  if (!url) {
+    return null;
+  }
+  return pick
+    ? { url, width: num(pick, 'x'), height: num(pick, 'y'), caption, isVideo: false }
+    : { url, width, height, caption, isVideo: false };
+}
+
+function galleryFrom(data: Record<string, unknown>, depth = 0): GalleryItem[] | null {
+  const galleryData = data.gallery_data;
+  const metadata = data.media_metadata;
+  if (isRecord(galleryData) && Array.isArray(galleryData.items) && isRecord(metadata)) {
+    const items = galleryData.items
+      .map((item) => galleryItemFrom(item, metadata))
+      .filter((item): item is GalleryItem => item !== null);
+    return items.length > 0 ? items : null;
+  }
+  const parent = depth === 0 ? crosspostParent(data) : null;
+  return parent ? galleryFrom(parent, 1) : null;
 }
 
 /** Largest preview no wider than this is enough for a 760 px panel at 1.5x. */

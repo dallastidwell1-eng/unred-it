@@ -55,6 +55,8 @@ export default defineConfig({
       'https://old.reddit.com/*',
       'https://www.reddit.com/*',
       'https://reddit.com/*',
+      // Reddit's own video host, for videos with sound (D-054).
+      'https://v.redd.it/*',
     ],
     browser_specific_settings: {
       gecko: {

@@ -48,6 +48,8 @@ function post(partial: Partial<Post>): Post {
     previewImage: null,
     isVideo: false,
     isGallery: false,
+    video: null,
+    gallery: null,
     ...partial,
   };
 }
@@ -111,6 +113,36 @@ const PAGE_1: Post[] = [
     numComments: 6,
     thumbnailUrl: tile('#2B3340', 'img'),
     createdUtc: NOW_S - 3600 * 10,
+  }),
+  post({
+    title: 'A gallery of three pictures',
+    subreddit: 'photography',
+    isGallery: true,
+    score: 77,
+    numComments: 3,
+    gallery: [
+      {
+        url: tile('#3A3C40', 'picture 1 (wide)', 1080, 720),
+        width: 1080,
+        height: 720,
+        caption: 'A wide one',
+        isVideo: false,
+      },
+      {
+        url: tile('#2B3340', 'picture 2 (tall)', 720, 1080),
+        width: 720,
+        height: 1080,
+        caption: '',
+        isVideo: false,
+      },
+      {
+        url: tile('#33363B', 'picture 3', 1000, 1000),
+        width: 1000,
+        height: 1000,
+        caption: 'Square',
+        isVideo: false,
+      },
+    ],
   }),
   post({
     title: 'Sensitive post example',

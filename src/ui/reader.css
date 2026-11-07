@@ -355,13 +355,104 @@ button {
 }
 
 .post-image {
+  /* Its own shape, no side bars (D-056): auto size within both limits. */
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 70vh;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+.media {
+  margin: 0;
+}
+
+.media-frame {
   display: block;
   width: 100%;
-  height: auto;
   max-height: 70vh;
-  object-fit: contain;
   border-radius: 12px;
-  background: var(--raised);
+  background: #000;
+}
+
+.media-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--faint);
+}
+
+.media-note a {
+  color: var(--blue);
+}
+
+/* Gallery (D-055) */
+.gallery-frame {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.gallery-frame img,
+.gallery-frame video {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+}
+
+.gallery-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.gallery-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line2);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.gallery-button.next svg {
+  transform: scaleX(-1);
+}
+
+.gallery-button:disabled {
+  color: var(--marker);
+  cursor: default;
+}
+
+.gallery-count {
+  min-width: 56px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-caption {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+}
+
+.media + .post-text {
+  margin-top: 20px;
 }
 
 /* Text posts: Reddit's formatting, cleaned (D-052). */
@@ -472,10 +563,12 @@ button {
 }
 
 .link-card-image {
+  /* Its own shape, not a cropped strip (D-056). */
   display: block;
   width: 100%;
-  height: 170px;
-  object-fit: cover;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
   background: var(--raised);
 }
 

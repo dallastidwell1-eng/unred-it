@@ -5,82 +5,10 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { formatAge, formatCount } from '../lib/format';
 import type { Post } from '../lib/reddit-data';
-import { cleanRedditHtml, safeHref } from '../lib/sanitize';
-import { BackIcon, CommentIcon, DownIcon, ExternalIcon, UpIcon } from './icons';
+import { BackIcon, CommentIcon, DownIcon, UpIcon } from './icons';
+import { PostMedia } from './PostMedia';
 
 const REDDIT = 'https://old.reddit.com';
-
-/** Reddit's HTML, cleaned (D-052) and added as real nodes. */
-function PostText({ html }: { html: string }) {
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = box.current;
-    if (!element) {
-      return;
-    }
-    element.replaceChildren(cleanRedditHtml(html, document, new DOMParser()));
-    // Spoilers reveal on hover, tap or keyboard focus.
-    element.querySelectorAll('.spoiler').forEach((spoiler) => {
-      spoiler.setAttribute('tabindex', '0');
-    });
-  }, [html]);
-  return <div class="post-text" ref={box} />;
-}
-
-/** For posts whose media we do not show yet (video, gallery). */
-function redditOnlyLabel(post: Post): string | null {
-  if (post.isVideo || post.postHint === 'hosted:video') {
-    return 'Play the video on Reddit';
-  }
-  if (post.isGallery) {
-    return 'View the gallery on Reddit';
-  }
-  return null;
-}
-
-function PostContent({ post }: { post: Post }) {
-  if (post.isSelf) {
-    return post.selftextHtml ? <PostText html={post.selftextHtml} /> : null;
-  }
-  if (post.postHint === 'image' && post.previewImage) {
-    return (
-      <img
-        class="post-image"
-        src={post.previewImage.url}
-        width={post.previewImage.width}
-        height={post.previewImage.height}
-        alt=""
-        decoding="async"
-        referrerpolicy="no-referrer"
-      />
-    );
-  }
-
-  const redditOnly = redditOnlyLabel(post);
-  const href = redditOnly ? `${REDDIT}${post.permalink}` : safeHref(post.url);
-  return (
-    <div class="link-card">
-      {post.previewImage && (
-        <img
-          class="link-card-image"
-          src={post.previewImage.url}
-          alt=""
-          decoding="async"
-          referrerpolicy="no-referrer"
-        />
-      )}
-      <div class="link-card-body">
-        <p class="link-source">{redditOnly ? 'reddit.com' : post.domain}</p>
-        {href && (
-          <a class="open-button" href={href} target="_blank" rel="noopener noreferrer">
-            {redditOnly ?? 'Open article'}
-            <ExternalIcon />
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export function ContentLayer({
   post,
@@ -168,7 +96,7 @@ export function ContentLayer({
             <h2 id="layer-title" class="layer-title">
               {post.title}
             </h2>
-            <PostContent post={post} />
+            <PostMedia post={post} />
           </article>
           <div class="action-bar">
             <span class={`score ${vote}`}>

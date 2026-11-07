@@ -272,3 +272,18 @@ Source: session 002, owner chose "Own allow-list".
 Date: 2026-11-06 · Decider: owner
 Decision: happy-dom 21 (MIT) is approved as a dev-only package so unit tests can run code that needs a page (the HTML cleaner, screens). It never ships in the extension.
 Source: session 002, owner approved.
+
+### D-054: Videos play inside the reader; hls.js for sound
+Date: 2026-11-06 · Decider: owner (D-009 approval, on Claude's recommendation)
+Decision: Reddit-hosted videos play in the content layer. Silent clips and GIF-style videos play as plain MP4 with the browser's own player. Videos with sound use hls.js 1.7 (Apache-2.0, light build) to play Reddit's HLS stream, which carries the sound. Adds host permission https://v.redd.it/* (Reddit's video host). If hls.js cannot play, the reader falls back to the silent MP4 and offers "Play on Reddit". Videos from other sites (YouTube and so on) stay as a link out.
+Source: session 002, owner chose "Add hls.js" after testing the content layer ("Video not playing").
+
+### D-055: Galleries: one picture at a time with buttons, no swipe
+Date: 2026-11-06 · Decider: owner
+Decision: A gallery post shows one picture at a time in the content layer, with Previous and Next buttons and a "2 / 7" counter on both phone and PC. No swipe gesture. Captions show under the picture.
+Source: session 002, owner: "buttons on both PC and Phone, no swipe".
+
+### D-056: Media keeps its own shape (changes layout-spec 5.4)
+Date: 2026-11-06 · Decider: owner (from his test), detail by Claude
+Decision: Pictures in the content layer are never cropped to a strip. The link card shows its preview image at the image's own proportions (no fixed 170 px height), and image posts show without grey side bars; both are capped at 70% of the screen height. layout-spec.md 5.4 "image (170 px)" is replaced by this.
+Source: session 002, owner: "Weird landscaped thumbnail".
