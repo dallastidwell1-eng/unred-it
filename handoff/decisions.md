@@ -292,3 +292,13 @@ Source: session 002, owner: "Weird landscaped thumbnail".
 Date: 2026-11-06 · Decider: owner (from his test: "Upvote is not working and there is no downvote"; "Gifs need a progress bar")
 Decision: The opened post's action bar has working Upvote and Downvote buttons now (pulled forward from M5; save and share stay in M5). The vote shows at once and is sent with src/lib/reddit-client.ts (form plus modhash, D-047; the modhash is fetched again once after a 403); if Reddit refuses, the post goes back to how it was and a short message says why. GIF-style clips and animated gallery pictures show the browser's player controls (progress bar, seek), and still loop without sound.
 Source: session 002, owner test of the content layer.
+
+### D-058: Search results show in the reader
+Date: 2026-11-07 · Decider: owner (on Claude's recommendation)
+Decision: The top bar's search opens its results in the reader, drawn like the feed (same rows; posts and comments open the same way; Back works). Searching from a subreddit searches that subreddit, with a one-tap "Search all of Reddit" link; from Home, Popular or All it searches all of Reddit. The reader takes over old.reddit.com search pages (/search and /r/name/search with a q= query).
+Source: session 003, owner chose "In the reader".
+
+### D-059: Account button opens the user's Reddit profile until M7
+Date: 2026-11-07 · Decider: owner
+Decision: Until the account page is built (M7, D-038), the account button in the top bar (letter avatar plus the unread dot, D-029) opens the user's own profile on old.reddit.com (/user/name/) in the same tab. M7 replaces the target with the rebuilt account page.
+Source: session 003, owner chose "Your Reddit profile" over Reddit's inbox or a small menu.

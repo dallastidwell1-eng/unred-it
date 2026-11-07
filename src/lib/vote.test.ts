@@ -84,3 +84,23 @@ describe('createRedditClient.vote', () => {
     await expect(failing.vote('t3_a', 1)).rejects.toThrow('HTTP 500');
   });
 });
+
+describe('createRedditClient.account', () => {
+  it('gives the name and unread count, and shares the one /api/me request with voting', async () => {
+    const me = { kind: 't2', data: { name: 'me', modhash: 'mh1', inbox_count: 2 } };
+    const fetchFn = vi.fn<FetchLike>((url) =>
+      Promise.resolve(url === '/api/me.json' ? reply(200, me) : reply(200, {})),
+    );
+    const client = createRedditClient(fetchFn);
+    expect(await client.account()).toEqual({ name: 'me', unread: 2 });
+    await client.vote('t3_a', 1);
+    expect(fetchFn.mock.calls.filter(([url]) => url === '/api/me.json')).toHaveLength(1);
+  });
+
+  it('returns null when logged out or when Reddit fails', async () => {
+    const loggedOut = createRedditClient(async () => Promise.resolve(reply(200, {})));
+    expect(await loggedOut.account()).toBeNull();
+    const failing = createRedditClient(async () => Promise.resolve(reply(503, '')));
+    expect(await failing.account()).toBeNull();
+  });
+});

@@ -5,7 +5,7 @@
 import '@fontsource-variable/inter';
 import '@fontsource-variable/inter-tight';
 import type { CommentNode, ThreadItem } from '../src/lib/comments';
-import { feedTitle } from '../src/lib/feed-route';
+import { feedTitle, searchInfo } from '../src/lib/feed-route';
 import type { FeedPage, Post } from '../src/lib/reddit-data';
 import { sortSubreddits, type Subreddit } from '../src/lib/subreddits';
 import type { FeedSource } from '../src/ui/App';
@@ -13,10 +13,13 @@ import { mountReader } from '../src/ui/mount';
 
 const NOW_S = Date.now() / 1000;
 
-// ?feed=/r/books/ pretends to be that feed; ?subs=none or ?subs=error shows
-// the picker's empty and error states.
+// ?feed=/r/books/ (or a search such as /search?q=pan) pretends to be that
+// page; ?subs=none|error shows the picker's empty and error states;
+// ?account=none shows the logged-out bar, ?account=read one with no unread.
 const params = new URLSearchParams(window.location.search);
-const FEED = params.get('feed') ?? '/';
+const PAGE = new URL(params.get('feed') ?? '/', window.location.origin);
+const FEED = PAGE.pathname;
+const SEARCH = searchInfo(PAGE.pathname, PAGE.search);
 
 const SAMPLE_SUBS: Subreddit[] = sortSubreddits(
   [
@@ -303,6 +306,15 @@ const source: FeedSource = {
   },
   title: feedTitle(FEED),
   path: FEED,
+  search: SEARCH,
+  async loadAccount() {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const mode = params.get('account');
+    if (mode === 'none') {
+      return null;
+    }
+    return { name: 'sample_reader', unread: mode === 'read' ? 0 : 2 };
+  },
   async loadSubreddits() {
     await new Promise((resolve) => setTimeout(resolve, 400));
     if (params.get('subs') === 'error') {
@@ -318,6 +330,12 @@ const source: FeedSource = {
   redditUrl: '#',
   async load(after): Promise<FeedPage> {
     await new Promise((resolve) => setTimeout(resolve, 300));
+    if (SEARCH) {
+      // A pretend search: sample posts whose title holds the words.
+      const words = SEARCH.query.toLowerCase();
+      const hits = [...PAGE_1, ...PAGE_2].filter((p) => p.title.toLowerCase().includes(words));
+      return { posts: hits, after: null };
+    }
     return after ? { posts: PAGE_2, after: null } : { posts: PAGE_1, after: 'page2' };
   },
 };

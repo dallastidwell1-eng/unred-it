@@ -6,8 +6,16 @@ import { type Me, parseMe, type VoteDirection, voteBody } from './reddit-data';
 
 export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
 
+/** The logged-in user as the top bar shows them (no modhash). */
+export interface Account {
+  name: string;
+  unread: number;
+}
+
 export interface RedditClient {
   vote(fullname: string, dir: VoteDirection): Promise<void>;
+  /** The logged-in user, or null when logged out or Reddit does not answer. */
+  account(): Promise<Account | null>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -83,6 +91,14 @@ export function createRedditClient(fetchFn: FetchLike): RedditClient {
   return {
     vote(fullname, dir) {
       return post('/api/vote', (modhash) => voteBody(fullname, dir, modhash));
+    },
+    async account() {
+      try {
+        const user = await me();
+        return { name: user.name, unread: user.unread };
+      } catch {
+        return null;
+      }
     },
   };
 }

@@ -57,8 +57,8 @@ export function FeedPicker({
   onClose,
   active = true,
 }: {
-  /** The feed on screen now, shown as selected. */
-  current: FixedFeed | { name: string };
+  /** The feed on screen now, shown as selected (null: none, for a search of all Reddit). */
+  current: FixedFeed | { name: string } | null;
   /** The user's subscriptions; missing where they cannot be read. */
   loadSubreddits?: () => Promise<Subreddit[]>;
   /** Opens the feed at this old.reddit.com path. */
@@ -108,7 +108,8 @@ export function FeedPicker({
 
   const rows = rowsFor(list, query);
   const filtering = query.trim() !== '';
-  const selectedName = typeof current === 'object' ? current.name.toLowerCase() : null;
+  const selectedName =
+    current !== null && typeof current === 'object' ? current.name.toLowerCase() : null;
 
   const follow = (path: string) => (event: MouseEvent) => {
     if (isPlainClick(event)) {

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { feedJsonPath, feedTitle, isFeedPath, readerTurnedOff } from './feed-route';
+import {
+  feedJsonPath,
+  feedTitle,
+  isFeedPath,
+  isSearchPath,
+  readerTurnedOff,
+  searchInfo,
+  searchPath,
+} from './feed-route';
 import { formatAge, formatCount } from './format';
 import { parseFeedPage } from './reddit-data';
 
@@ -45,6 +53,50 @@ describe('feedJsonPath', () => {
     expect(feedJsonPath('/top/', '?t=week&count=25&after=t3_old&unred=on', 't3_new')).toBe(
       '/top/.json?t=week&raw_json=1&limit=25&after=t3_new',
     );
+  });
+});
+
+describe('search pages (D-058)', () => {
+  it('knows a search page', () => {
+    expect(isSearchPath('/search')).toBe(true);
+    expect(isSearchPath('/search/')).toBe(true);
+    expect(isSearchPath('/r/books/search')).toBe(true);
+    expect(isSearchPath('/r/search/')).toBe(false); // the subreddit named "search"
+    expect(isSearchPath('/r/books/')).toBe(false);
+    expect(isFeedPath('/search')).toBe(false);
+  });
+
+  it('reads the words and whether one subreddit is searched', () => {
+    expect(searchInfo('/search', '?q=cast+iron')).toEqual({ query: 'cast iron', subreddit: null });
+    expect(searchInfo('/r/Cooking/search', '?q=pan&restrict_sr=on')).toEqual({
+      query: 'pan',
+      subreddit: 'Cooking',
+    });
+    // Without restrict_sr, old.reddit.com searches all of Reddit.
+    expect(searchInfo('/r/Cooking/search', '?q=pan')).toEqual({ query: 'pan', subreddit: null });
+  });
+
+  it('leaves empty searches and subreddit or user searches to Reddit', () => {
+    expect(searchInfo('/search', '')).toBeNull();
+    expect(searchInfo('/search', '?q=%20')).toBeNull();
+    expect(searchInfo('/search', '?q=cats&type=sr')).toBeNull();
+    expect(searchInfo('/search', '?q=cats&type=link')).toEqual({ query: 'cats', subreddit: null });
+    expect(searchInfo('/r/books/', '?q=cats')).toBeNull();
+  });
+
+  it('builds the search address, and its .json form', () => {
+    expect(searchPath(' cast iron ', null)).toBe('/search?q=cast+iron');
+    expect(searchPath('pan & lid', 'Cooking')).toBe(
+      '/r/Cooking/search?q=pan+%26+lid&restrict_sr=on',
+    );
+    expect(feedJsonPath('/r/Cooking/search', '?q=pan&restrict_sr=on', 't3_x')).toBe(
+      '/r/Cooking/search.json?q=pan&restrict_sr=on&raw_json=1&limit=25&after=t3_x',
+    );
+    expect(feedJsonPath('/search/', '?q=pan', null)).toBe('/search.json?q=pan&raw_json=1&limit=25');
+  });
+
+  it('titles a search page "Search"', () => {
+    expect(feedTitle('/r/books/search')).toBe('Search');
   });
 });
 

@@ -86,6 +86,8 @@ export interface Me {
   name: string;
   /** Reddit's anti-forgery token for this session. Never log or store it. */
   modhash: string;
+  /** Unread inbox items (messages and replies); at least 1 when Reddit says there is mail. */
+  unread: number;
 }
 
 export type VoteDirection = 1 | 0 | -1;
@@ -338,7 +340,9 @@ export function parseMe(json: unknown): Me | null {
   }
   const name = str(json.data, 'name');
   const modhash = str(json.data, 'modhash');
-  return name && modhash ? { name, modhash } : null;
+  const count = num(json.data, 'inbox_count');
+  const unread = count > 0 ? count : json.data.has_mail === true ? 1 : 0;
+  return name && modhash ? { name, modhash, unread } : null;
 }
 
 /** The post ID ("abc123") from a Reddit post URL or a "t3_" fullname, or null. */

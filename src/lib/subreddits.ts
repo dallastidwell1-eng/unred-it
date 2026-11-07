@@ -140,9 +140,12 @@ export function feedPathFor(choice: FixedFeed | Subreddit): string {
   return `/r/${choice.name}/`;
 }
 
-/** Which feed a page path shows: a fixed feed or a subreddit name. */
-export function currentFeed(pathname: string): FixedFeed | { name: string } {
+/** Which feed a page path shows: a fixed feed, a subreddit name, or null (search of all Reddit). */
+export function currentFeed(pathname: string): FixedFeed | { name: string } | null {
   const parts = pathname.split('/').filter(Boolean);
+  if (parts[0] === 'search') {
+    return null;
+  }
   if (parts[0] !== 'r' || !parts[1]) {
     return 'home';
   }

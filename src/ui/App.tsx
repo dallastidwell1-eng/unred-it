@@ -4,14 +4,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
+import { searchPath, type SearchInfo } from '../lib/feed-route';
+import type { Account } from '../lib/reddit-client';
 import type { FeedPage, Post, VoteDirection } from '../lib/reddit-data';
 import { currentFeed, type Subreddit } from '../lib/subreddits';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
+import { isPlainClick } from './clicks';
 import { CommentsView } from './CommentsView';
 import { ContentLayer } from './ContentLayer';
 import { FeedPicker } from './FeedPicker';
-import { ChevronDownIcon } from './icons';
 import { FeedRow } from './FeedRow';
+import { TopBar } from './TopBar';
 
 /** Where the data comes from: Reddit in the extension, samples in the preview. */
 export interface FeedSource {
@@ -28,8 +31,12 @@ export interface FeedSource {
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
   /** The user's subscribed subreddits, sorted. Missing where they cannot be read. */
   loadSubreddits?: () => Promise<Subreddit[]>;
-  /** Opens another feed. Default: load that page in place of this one. */
+  /** Opens another reader page (feed or search). Default: the browser loads it. */
   openFeed?: (path: string) => void;
+  /** The search this page shows, on a search page (D-058). */
+  search?: SearchInfo | null;
+  /** The logged-in user for the account button; null when logged out. */
+  loadAccount?: () => Promise<Account | null>;
 }
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
@@ -118,6 +125,20 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     [push, closeTop],
   );
 
+  /** Loads another reader page; `replace` puts it in place of this history entry. */
+  const go = useCallback(
+    (path: string, replace: boolean) => {
+      if (source.openFeed) {
+        source.openFeed(path);
+      } else if (replace) {
+        window.location.replace(path);
+      } else {
+        window.location.assign(path);
+      }
+    },
+    [source],
+  );
+
   /**
    * Opens the chosen feed. The new page takes the picker's place in history,
    * so Back from it returns to this feed with the picker closed.
@@ -125,14 +146,38 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
   const chooseFeed = useCallback(
     (path: string) => {
       setOverlays([]);
-      if (source.openFeed) {
-        source.openFeed(path);
-      } else {
-        window.location.replace(path);
-      }
+      go(path, true);
     },
-    [source],
+    [go],
   );
+
+  // The logged-in user for the account button; read once per page load.
+  const [account, setAccount] = useState<Account | null | undefined>(
+    source.loadAccount ? undefined : null,
+  );
+  useEffect(() => {
+    let live = true;
+    source
+      .loadAccount?.()
+      .then((user) => {
+        if (live) setAccount(user);
+      })
+      .catch(() => {
+        if (live) setAccount(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [source]);
+
+  // A new search looks in the subreddit on screen; from Home, Popular, All or
+  // a search of all Reddit it looks everywhere (D-058).
+  const feed = currentFeed(source.path);
+  const searchIn = source.search
+    ? source.search.subreddit
+    : feed !== null && typeof feed === 'object'
+      ? feed.name
+      : null;
 
   // Subscriptions are read once per page load, when the picker first opens.
   const subscriptions = useRef<Promise<Subreddit[]> | null>(null);
@@ -266,21 +311,41 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
 
   return (
     <div class="app">
-      <header class="topbar">
-        <button
-          class="picker"
-          type="button"
-          aria-label={`${source.title}, choose a feed`}
-          aria-haspopup="dialog"
-          aria-expanded={pickerOpen}
-          onClick={togglePicker}
-        >
-          {source.title}
-          <ChevronDownIcon />
-        </button>
-      </header>
+      <TopBar
+        title={source.title}
+        pickerOpen={pickerOpen}
+        onPickerClick={togglePicker}
+        search={source.search ?? null}
+        searchIn={searchIn}
+        onSearch={(path) => {
+          go(path, false);
+        }}
+        account={account}
+        pinned={overlays.length > 0}
+      />
       <main>
         <h1 class="sr-only">{source.title}</h1>
+        {source.search && (
+          <div class="search-head">
+            <p>
+              Results for <strong>“{source.search.query}”</strong>
+              {source.search.subreddit && ` in r/${source.search.subreddit}`}
+            </p>
+            {source.search.subreddit && (
+              <a
+                href={searchPath(source.search.query, null)}
+                onClick={(event) => {
+                  if (isPlainClick(event)) {
+                    event.preventDefault();
+                    go(event.currentTarget.getAttribute('href') ?? '/', false);
+                  }
+                }}
+              >
+                Search all of Reddit
+              </a>
+            )}
+          </div>
+        )}
         <ul class="feed">
           {posts.map((post) => (
             <FeedRow
@@ -294,7 +359,15 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         </ul>
         <div ref={sentinel} aria-live="polite">
           {status === 'loading' && <p class="status">Loading…</p>}
-          {status === 'end' && <p class="status">You have reached the end.</p>}
+          {status === 'end' && (
+            <p class="status">
+              {posts.length > 0
+                ? 'You have reached the end.'
+                : source.search
+                  ? 'Nothing found.'
+                  : 'No posts here.'}
+            </p>
+          )}
           {status === 'error' && (
             <div class="status">
               <p>Could not load the feed: {error}</p>

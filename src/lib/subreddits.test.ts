@@ -170,6 +170,8 @@ describe('feedPathFor and currentFeed', () => {
     expect(currentFeed('/r/popular/')).toBe('popular');
     expect(currentFeed('/r/All/new/')).toBe('all');
     expect(currentFeed('/r/DIY/top/')).toEqual({ name: 'DIY' });
+    expect(currentFeed('/search')).toBeNull();
+    expect(currentFeed('/r/DIY/search')).toEqual({ name: 'DIY' });
   });
 });
 

@@ -98,7 +98,17 @@ describe('parseMe', () => {
     expect(parseMe({ kind: 't2', data: { name: 'me', modhash: 'xyz' } })).toEqual({
       name: 'me',
       modhash: 'xyz',
+      unread: 0,
     });
+  });
+
+  it('reads the unread count for the dot', () => {
+    const me = (data: Record<string, unknown>) =>
+      parseMe({ data: { name: 'me', modhash: 'xyz', ...data } })?.unread;
+    expect(me({ inbox_count: 3, has_mail: true })).toBe(3);
+    expect(me({ inbox_count: 0, has_mail: true })).toBe(1);
+    expect(me({ inbox_count: 0, has_mail: false })).toBe(0);
+    expect(me({ inbox_count: 'lots' })).toBe(0);
   });
 
   it('returns null when logged out', () => {
