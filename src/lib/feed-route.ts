@@ -93,9 +93,7 @@ export function feedJsonPath(pathname: string, search: string, after: string | n
   if (after) {
     query.set('after', after);
   }
-  // Search uses Reddit's documented form, /search.json; feeds use /.json.
-  const json = isSearchPath(pathname) ? `${path}.json` : `${path || ''}/.json`;
-  return `${json}?${query.toString()}`;
+  return `${path || ''}/.json?${query.toString()}`;
 }
 
 /** True when the user asked for Reddit's own page (?unred=off). */

@@ -84,15 +84,11 @@ describe('search pages (D-058)', () => {
     expect(searchInfo('/r/books/', '?q=cats')).toBeNull();
   });
 
-  it('builds the search address, and its .json form', () => {
+  it('builds the search address', () => {
     expect(searchPath(' cast iron ', null)).toBe('/search?q=cast+iron');
     expect(searchPath('pan & lid', 'Cooking')).toBe(
       '/r/Cooking/search?q=pan+%26+lid&restrict_sr=on',
     );
-    expect(feedJsonPath('/r/Cooking/search', '?q=pan&restrict_sr=on', 't3_x')).toBe(
-      '/r/Cooking/search.json?q=pan&restrict_sr=on&raw_json=1&limit=25&after=t3_x',
-    );
-    expect(feedJsonPath('/search/', '?q=pan', null)).toBe('/search.json?q=pan&raw_json=1&limit=25');
   });
 
   it('titles a search page "Search"', () => {

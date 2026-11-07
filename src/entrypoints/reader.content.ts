@@ -7,9 +7,11 @@ import {
   feedJsonPath,
   feedTitle,
   isFeedPath,
+  isSearchPath,
   readerTurnedOff,
   searchInfo,
 } from '../lib/feed-route';
+import { loadSearchPage } from '../lib/search-page';
 import { createRedditClient } from '../lib/reddit-client';
 import { parseFeedPage } from '../lib/reddit-data';
 import { loadSubscriptions } from '../lib/subreddits';
@@ -46,6 +48,18 @@ async function fetchJson(path: string): Promise<unknown> {
   return response.json();
 }
 
+/** GET a Reddit page's HTML as the logged-in user (search results, D-058). */
+async function fetchText(path: string): Promise<string> {
+  const response = await fetch(path, {
+    credentials: 'include',
+    headers: { Accept: 'text/html' },
+  });
+  if (!response.ok) {
+    throw new Error(`Reddit answered HTTP ${String(response.status)}`);
+  }
+  return response.text();
+}
+
 function redditSource(): FeedSource {
   const { pathname, search } = window.location;
   const off = new URLSearchParams(search);
@@ -60,6 +74,10 @@ function redditSource(): FeedSource {
     search: searchInfo(pathname, search),
     redditUrl: `${pathname}?${off.toString()}`,
     async load(after) {
+      // Reddit blocks /search.json; search pages are read from their HTML.
+      if (isSearchPath(pathname)) {
+        return loadSearchPage(fetchText, fetchJson, pathname, search, after);
+      }
       return parseFeedPage(await fetchJson(feedJsonPath(pathname, search, after)));
     },
     loadThread: (post, sort) => loadThread(fetchJson, post, sort),

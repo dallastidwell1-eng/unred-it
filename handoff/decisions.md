@@ -302,3 +302,8 @@ Source: session 003, owner chose "In the reader".
 Date: 2026-11-07 · Decider: owner
 Decision: Until the account page is built (M7, D-038), the account button in the top bar (letter avatar plus the unread dot, D-029) opens the user's own profile on old.reddit.com (/user/name/) in the same tab. M7 replaces the target with the rebuilt account page.
 Source: session 003, owner chose "Your Reddit profile" over Reddit's inbox or a small menu.
+
+### D-060: Search results come from Reddit's search page, not search.json
+Date: 2026-11-07 · Decider: Claude (technical detail of D-058, from the owner's test)
+Decision: Reddit blocks /search.json for everyone, logged in or not ("You've been blocked by network security", owner's Firefox, session 003), while its normal search page works. The reader reads the post IDs and the next-page cursor from the search page's HTML (src/lib/search-page.ts), then loads the full posts from /by_id/<ids>.json, a normal listing address (D-047). If /by_id/ is refused too, the rows are built from what the search page shows (title, subreddit, author, score, comments, age). This depends on old.reddit.com's search page markup and may need care if Reddit changes it.
+Source: session 003, owner test: search.json blocked page, normal search page with results.

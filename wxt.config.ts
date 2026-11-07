@@ -58,6 +58,16 @@ export default defineConfig({
       // Reddit's own video host, for videos with sound (D-054).
       'https://v.redd.it/*',
     ],
+    // Firefox refuses a content script's fetch of the extension's own files
+    // unless they are listed here ("NetworkError", owner test session 003).
+    // Only the fonts, only for old.reddit.com. Each install has its own random
+    // moz-extension address, so pages cannot use this to detect the add-on.
+    web_accessible_resources: [
+      {
+        resources: ['fonts/*'],
+        matches: ['https://old.reddit.com/*'],
+      },
+    ],
     browser_specific_settings: {
       gecko: {
         id: 'unred-it@praxisdesignworks',
