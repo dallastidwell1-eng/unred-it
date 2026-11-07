@@ -23,6 +23,20 @@ export interface Post {
   stickied: boolean;
   /** A real https thumbnail image, or null (text, NSFW, spoiler, default). */
   thumbnailUrl: string | null;
+  /** Reddit's HTML for a text post (clean it before showing it, D-052). */
+  selftextHtml: string | null;
+  /** Reddit's guess at the content: "image", "link", "self", "hosted:video", ... */
+  postHint: string;
+  /** A display-size preview image, if Reddit made one. */
+  previewImage: PreviewImage | null;
+  isVideo: boolean;
+  isGallery: boolean;
+}
+
+export interface PreviewImage {
+  url: string;
+  width: number;
+  height: number;
 }
 
 /** One page of a feed and the cursor for the next page (null at the end). */
@@ -97,7 +111,45 @@ function toPost(data: Record<string, unknown>): Post {
     over18: data.over_18 === true,
     stickied: data.stickied === true,
     thumbnailUrl: thumbnailFrom(str(data, 'thumbnail')),
+    selftextHtml: str(data, 'selftext_html') || null,
+    postHint: str(data, 'post_hint'),
+    previewImage: previewFrom(data.preview),
+    isVideo: data.is_video === true,
+    isGallery: data.is_gallery === true,
   };
+}
+
+/** Largest preview no wider than this is enough for a 760 px panel at 1.5x. */
+const PREVIEW_MAX_WIDTH = 1080;
+
+function imageFrom(value: unknown): PreviewImage | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const url = str(value, 'url');
+  const width = num(value, 'width');
+  const height = num(value, 'height');
+  return url.startsWith('https://') && width > 0 && height > 0 ? { url, width, height } : null;
+}
+
+/** Picks a display-size image from Reddit's `preview` (needs raw_json=1 for clean URLs). */
+function previewFrom(preview: unknown): PreviewImage | null {
+  if (!isRecord(preview) || !Array.isArray(preview.images)) {
+    return null;
+  }
+  const first: unknown = preview.images[0];
+  if (!isRecord(first)) {
+    return null;
+  }
+  const source = imageFrom(first.source);
+  const sizes = Array.isArray(first.resolutions)
+    ? first.resolutions.map(imageFrom).filter((i): i is PreviewImage => i !== null)
+    : [];
+  if (source && source.width <= PREVIEW_MAX_WIDTH) {
+    return source;
+  }
+  const fitting = sizes.filter((i) => i.width <= PREVIEW_MAX_WIDTH);
+  return fitting.at(-1) ?? source;
 }
 
 /** Reddit puts words like "self", "nsfw" or "default" in `thumbnail` when there is no image. */

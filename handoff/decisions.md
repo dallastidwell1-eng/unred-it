@@ -262,3 +262,13 @@ Source: session 002, owner chose "Preact".
 Date: 2026-11-06 · Decider: owner (D-009 approval, on Claude's recommendation)
 Decision: The extension carries its own Inter (interface) and Inter Tight (wordmark) variable fonts from @fontsource-variable/inter and @fontsource-variable/inter-tight (SIL OFL 1.1). No font is fetched from the web. System fonts are the fallback.
 Source: session 002, owner chose "Bundle Inter".
+
+### D-052: Post text is cleaned by our own allow-list, not a library
+Date: 2026-11-06 · Decider: owner (on Claude's recommendation)
+Decision: Reddit's post and comment HTML (selftext_html, body_html) is parsed by the browser's DOMParser, which does not run scripts, and rebuilt node by node with createElement: only allow-listed tags and attributes survive (paragraphs, emphasis, links with http/https/relative addresses, lists, quotes, code, tables, headings, rules, spoilers). No innerHTML. No new runtime library. Unit-tested with happy-dom.
+Source: session 002, owner chose "Own allow-list".
+
+### D-053: happy-dom for DOM unit tests (D-009 approval)
+Date: 2026-11-06 · Decider: owner
+Decision: happy-dom 21 (MIT) is approved as a dev-only package so unit tests can run code that needs a page (the HTML cleaner, screens). It never ships in the extension.
+Source: session 002, owner approved.

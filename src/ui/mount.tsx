@@ -8,9 +8,15 @@ import readerCss from './reader.css?inline';
 
 export const READER_TAG = 'unred-it-reader';
 
-export function mountReader(parent: HTMLElement, source: FeedSource, note?: string): HTMLElement {
+export function mountReader(
+  parent: HTMLElement,
+  source: FeedSource,
+  note?: string,
+  /** 'open' only in the developer preview, so its layout can be inspected. */
+  shadowMode: ShadowRootMode = 'closed',
+): HTMLElement {
   const host = document.createElement(READER_TAG);
-  const shadow = host.attachShadow({ mode: 'closed' });
+  const shadow = host.attachShadow({ mode: shadowMode });
   const style = document.createElement('style');
   style.textContent = [
     themeCss(':host'),

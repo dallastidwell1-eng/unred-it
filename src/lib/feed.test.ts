@@ -91,6 +91,39 @@ describe('parseFeedPage', () => {
     expect(page.posts[2]?.over18).toBe(true);
   });
 
+  it('reads the text, hint and a display-size preview image', () => {
+    const img = (width: number) => ({
+      url: `https://preview.redd.it/a.jpg?width=${String(width)}`,
+      width,
+      height: width / 2,
+    });
+    const page = parseFeedPage({
+      kind: 'Listing',
+      data: {
+        children: [
+          child({
+            name: 't3_a',
+            selftext_html: '<p>hi</p>',
+            post_hint: 'image',
+            preview: {
+              images: [{ source: img(3000), resolutions: [img(320), img(640), img(1080)] }],
+            },
+          }),
+          child({ name: 't3_b', preview: { images: [{ source: img(800), resolutions: [] }] } }),
+          child({ name: 't3_c', is_video: true, is_gallery: false }),
+        ],
+      },
+    });
+    const [a, b, c] = page.posts;
+    expect(a?.selftextHtml).toBe('<p>hi</p>');
+    expect(a?.postHint).toBe('image');
+    expect(a?.previewImage?.width).toBe(1080);
+    expect(b?.previewImage?.width).toBe(800);
+    expect(c?.previewImage).toBeNull();
+    expect(c?.selftextHtml).toBeNull();
+    expect(c?.isVideo).toBe(true);
+  });
+
   it('returns a null cursor at the end of the feed', () => {
     expect(parseFeedPage({ kind: 'Listing', data: { children: [], after: null } }).after).toBe(
       null,
