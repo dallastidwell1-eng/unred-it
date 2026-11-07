@@ -1,0 +1,13 @@
+# Build output and tools
+.output/
+.wxt/
+web-ext-artifacts/
+node_modules/
+package-lock.json
+
+# Owner documents and the handoff record: not reformatted by tools
+handoff/
+design/
+references/
+.claude/
+CLAUDE.md

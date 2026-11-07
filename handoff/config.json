@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "project": "reddit",
+  "modules": {
+    "decisions": true,
+    "questions": true,
+    "lessons": true,
+    "todo": true,
+    "secret_scan": true,
+    "rules_reminder": false,
+    "doc_mirror": false,
+    "live_checks": false
+  },
+  "git": {
+    "autosave": true,
+    "push": false
+  },
+  "allow_auto_compact": false,
+  "start_here_limit": 6000,
+  "rules_reminder": "",
+  "doc_mirror": {
+    "file": "handoff/doc-mirror.md",
+    "source": ""
+  },
+  "live_checks": [],
+  "fingerprints": {
+    "fp_config": [
+      "CLAUDE.md",
+      ".claude/settings.json",
+      "handoff/config.json",
+      "handoff/templates"
+    ]
+  },
+  "secret_patterns_extra": []
+}

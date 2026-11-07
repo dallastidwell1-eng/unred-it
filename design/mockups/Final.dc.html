@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Final colors: Deep and Paper (approved)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 880px; height: 760px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+    <div style="background: {{m.bg}}; color: {{m.text}}; display: flex; flex-direction: column">
+      <div style="height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid {{m.line}}">
+        <span style="font-size: 17px; font-weight: 600">Home <span style="color: {{m.faint}}; font-weight: 400; font-size: 14px">▾</span></span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{m.faint}}">{{m.name}}</span>
+        <span style="position: relative; width: 28px; height: 28px; border-radius: 50%; background: {{m.raised}}; border: 1px solid {{m.line}}; color: {{m.muted}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-sizing: border-box">D<span aria-hidden="true" style="position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border-radius: 50%; background: {{m.red}}; box-shadow: 0 0 0 2px {{m.bg}}"></span></span>
+      </div>
+
+      <div style="display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid {{m.line}}">
+        <div aria-hidden="true" style="flex: none; width: 52px; height: 52px; border-radius: 8px; background: {{m.tone}}"></div>
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <div style="font-size: 16px; line-height: 1.38; font-weight: 500">Finished my first walnut dining table after eight months of weekends</div>
+          <div style="font-size: 13px; color: {{m.faint}}">r/woodworking · 3h · 2.4k · 186</div>
+        </div>
+      </div>
+
+      <div style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 12px; color: {{m.faint}}">Inside a post · upvoted</div>
+        <div style="display: flex; align-items: center; gap: 6px; height: 48px; border-top: 1px solid {{m.line}}; border-bottom: 1px solid {{m.line}}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{m.up}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+          <span style="font-size: 14px; font-weight: 600; background: {{m.upBg}}; color: {{m.upTxt}}; padding: 3px 8px; border-radius: 7px">2.4k</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{m.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>
+          <span style="font-size: 14px; color: {{m.muted}}; margin-left: 8px">186 comments</span>
+        </div>
+        <div style="font-size: 12px; color: {{m.faint}}; margin-top: 8px">Inside a post · downvoted</div>
+        <div style="display: flex; align-items: center; gap: 6px; height: 48px; border-top: 1px solid {{m.line}}; border-bottom: 1px solid {{m.line}}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{m.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+          <span style="font-size: 14px; font-weight: 600; background: {{m.downBg}}; color: {{m.downTxt}}; padding: 3px 8px; border-radius: 7px">2.4k</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{m.down}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>
+          <span style="font-size: 14px; color: {{m.muted}}; margin-left: 8px">186 comments</span>
+        </div>
+      </div>
+
+      <div style="padding: 18px 16px 0">
+        <div style="position: relative; padding-left: 22px">
+          <span aria-hidden="true" style="position: absolute; left: 7px; top: 22px; bottom: 0; width: 1px; background: {{m.line2}}"></span>
+          <div style="display: flex; align-items: center; gap: 6px; margin-left: -22px">
+            <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid {{m.marker}}; background: {{m.bg}}; color: {{m.muted}}; display: flex; align-items: center; justify-content: center; box-sizing: border-box; font-size: 11px; line-height: 1">−</span>
+            <span style="font-size: 13px; font-weight: 600; color: {{m.blue}}">u/weekend_joiner</span>
+            <span style="font-size: 13px; color: {{m.faint}}">· 2h · 198 points</span>
+          </div>
+          <p style="margin: 6px 0 0; font-size: 15px; line-height: 1.5">Cauls and a lot of clamps. I glued it in two halves, then joined the halves the next day.</p>
+        </div>
+      </div>
+
+      <div style="padding: 20px 16px 0; display: flex; gap: 10px; align-items: center">
+        <span style="height: 40px; padding: 0 16px; border-radius: 10px; background: {{m.blue}}; color: {{m.onBlue}}; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Open article</span>
+        <span style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid {{m.line2}}; color: {{m.text}}; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center">Comment</span>
+      </div>
+
+      <div style="margin: auto 16px 16px; display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: {{m.faint}}">
+        <sc-for list="{{m.swatches}}" as="s" hint-placeholder-count="7">
+          <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px 3px 3px; border-radius: 6px; border: 1px solid {{m.line}}"><span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 4px; background: {{s.c}}; border: 1px solid {{m.line}}"></span>{{s.n}} {{s.c}}</span>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":880,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const deep = { name: 'Dark · Deep', bg: '#1A1A1A', raised: '#282828', line: '#2A2A2A', line2: '#363636', marker: '#545454', text: '#E6E6E6', muted: '#BDBDBD', faint: '#A8A8A8', blue: '#8FB0E6', onBlue: '#1A1A1A', up: '#E2C98A', down: '#E5736B', upBg: 'transparent', upTxt: '#E2C98A', downBg: 'transparent', downTxt: '#E5736B', red: '#E5736B', tone: '#2B3340' };
+    const paper = { name: 'Light · Paper', bg: '#FAFAFA', raised: '#F0F0F0', line: '#E8E8E8', line2: '#D6D6D6', marker: '#A8A8A8', text: '#222222', muted: '#4D4D4D', faint: '#5E5E5E', blue: '#3A5F98', onBlue: '#FFFFFF', up: '#E8C04A', down: '#F2605D', upBg: '#E8C04A', upTxt: '#222222', downBg: '#F2605D', downTxt: '#222222', red: '#C2413A', tone: '#D2D9E2' };
+    const sw = (m) => [
+      { n: 'ground', c: m.bg }, { n: 'text', c: m.text }, { n: 'muted', c: m.muted },
+      { n: 'up', c: m.up }, { n: 'down', c: m.down }, { n: 'blue', c: m.blue }, { n: 'dot', c: m.red }
+    ];
+    return { modes: [deep, paper].map((m) => ({ ...m, swatches: sw(m) })) };
+  }
+}
+</script>
+</body>
+</html>

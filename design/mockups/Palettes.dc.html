@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grey, blue, metal, red</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#4D4D4D}a:hover{color:#222222}
+</style>
+</helmet>
+<div style="width: 1640px; height: 1040px; box-sizing: border-box; padding: 28px; background: #D6D6D6; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; gap: 22px; color: #222222">
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">1. Dark ground <span style="font-weight: 400; color: #4D4D4D">· neutral grey · votes: pale brass up, brick red down</span></div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <sc-for list="{{darks}}" as="m" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="background: {{m.bg}}; color: {{m.text}}; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid {{m.line}}">
+            <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-bottom: 1px solid {{m.line}}">
+              <span style="font-size: 15px; font-weight: 600">Home</span>
+              <span style="position: relative; width: 26px; height: 26px; border-radius: 50%; background: {{m.raised}}; color: {{m.muted}}; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">D<span aria-hidden="true" style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; border-radius: 50%; background: {{m.red}}; box-shadow: 0 0 0 2px {{m.bg}}"></span></span>
+            </div>
+            <div style="display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid {{m.line}}">
+              <div aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 7px; background: {{m.tone}}"></div>
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <div style="font-size: 14px; line-height: 1.35; font-weight: 500">Finished my first walnut dining table after eight months</div>
+                <div style="font-size: 12px; color: {{m.faint}}">r/woodworking · 3h · 2.4k · 186</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 12px; font-size: 13px">
+              <span style="color: {{m.up}}; font-weight: 600">▲ 2.4k</span>
+              <span style="color: {{m.down}}; font-weight: 600">▼ 12</span>
+              <div style="flex: 1"></div>
+              <span style="height: 28px; padding: 0 10px; border-radius: 7px; background: {{m.blue}}; color: {{m.onBlue}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Open article</span>
+            </div>
+          </div>
+          <div style="font-size: 13px; padding: 0 4px"><span style="font-weight: 600">{{m.name}}</span> <span style="color: #4D4D4D">{{m.bg}}</span></div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 28px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">2. Light ground <span style="font-weight: 400; color: #4D4D4D">· neutral, never stark white</span></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+        <sc-for list="{{lights}}" as="m" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="background: {{m.bg}}; color: {{m.text}}; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid {{m.line}}">
+              <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-bottom: 1px solid {{m.line}}">
+                <span style="font-size: 15px; font-weight: 600">Home</span>
+                <span style="position: relative; width: 26px; height: 26px; border-radius: 50%; background: {{m.raised}}; color: {{m.muted}}; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">D<span aria-hidden="true" style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; border-radius: 50%; background: {{m.red}}; box-shadow: 0 0 0 2px {{m.bg}}"></span></span>
+              </div>
+              <div style="display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid {{m.line}}">
+                <div aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 7px; background: {{m.tone}}"></div>
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <div style="font-size: 14px; line-height: 1.35; font-weight: 500">Finished my first walnut dining table after eight months</div>
+                  <div style="font-size: 12px; color: {{m.faint}}">r/woodworking · 3h · 2.4k · 186</div>
+                </div>
+              </div>
+              <div style="margin: 12px 12px 0; padding: 12px; border-radius: 10px; background: {{m.surface}}; border: 1px solid {{m.line}}; font-size: 13px; line-height: 1.4">A card on this ground (Lauren's view)</div>
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; font-size: 13px">
+                <span style="font-weight: 600; background: {{m.upChip}}; color: #222222; padding: 3px 8px; border-radius: 7px">▲ 2.4k</span>
+                <span style="font-weight: 600; background: {{m.downChip}}; color: #222222; padding: 3px 8px; border-radius: 7px">▼ 12</span>
+                <div style="flex: 1"></div>
+                <span style="height: 28px; padding: 0 10px; border-radius: 7px; background: {{m.blue}}; color: {{m.onBlue}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Open article</span>
+              </div>
+            </div>
+            <div style="font-size: 13px; padding: 0 4px"><span style="font-weight: 600">{{m.name}}</span> <span style="color: #4D4D4D">{{m.bg}}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">3. Color roles <span style="font-weight: 400; color: #4D4D4D">· each color has one job</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{roles}}" as="x" hint-placeholder-count="8">
+          <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: stretch">
+            <div style="display: flex; flex-direction: column; justify-content: center; gap: 1px">
+              <span style="font-size: 13px; font-weight: 600">{{x.name}}</span>
+              <span style="font-size: 12px; color: #4D4D4D">{{x.job}}</span>
+            </div>
+            <div style="background: #202020; border-radius: 10px; display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-size: 13px">
+              <span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 6px; background: {{x.d}}; flex: none"></span>
+              <span style="color: {{x.d}}; font-weight: 600">{{x.d}}</span>
+            </div>
+            <div style="background: #F3F3F3; border-radius: 10px; display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-size: 13px">
+              <span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 6px; background: {{x.l}}; flex: none"></span>
+              <span style="color: #222222; font-weight: 600">{{x.l}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 13px; line-height: 1.5; color: #4D4D4D; padding-top: 4px">Left: on the dim dark ground. Right: on the mist light ground. In light mode a vote shows as a bright chip with charcoal text, so brass and red can stay bright and still read clearly.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const hx = (n) => { const v = Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0'); return '#' + v + v + v; };
+    const dark = (name, g) => ({ name, bg: hx(g), surface: hx(g + 7), raised: hx(g + 14), line: hx(g + 16), text: '#E6E6E6', muted: '#BDBDBD', faint: '#A8A8A8', blue: '#8FB0E6', onBlue: '#1A1A1A', up: '#E2C98A', down: '#E5736B', red: '#E5736B', tone: '#2B3340' });
+    const light = (name, g) => ({ name, bg: hx(g), surface: hx(g + 6), raised: hx(g - 10), line: hx(g - 18), text: '#222222', muted: '#4D4D4D', faint: '#5E5E5E', blue: '#3A5F98', onBlue: '#FFFFFF', upChip: '#E8C04A', downChip: '#F2605D', red: '#C2413A', tone: '#D2D9E2' });
+    return {
+      darks: [dark('Deep', 0x1A), dark('Dim', 0x20), dark('Soft', 0x26), dark('Softer', 0x2C)],
+      lights: [light('Paper', 0xFA), light('Mist', 0xF3), light('Cloud', 0xEC)],
+      roles: [
+        { name: 'Upvote', job: 'Dark: pale brass. Light: bright brass chip', d: '#E2C98A', l: '#E8C04A' },
+        { name: 'Downvote', job: 'Dark: brick. Light: bright red chip', d: '#E5736B', l: '#F2605D' },
+        { name: 'Unread dot', job: 'Brick red', d: '#E5736B', l: '#C2413A' },
+        { name: 'Blue: dusty', job: 'Actions and links', d: '#8FB0E6', l: '#3A5F98' },
+        { name: 'Blue: steel', job: 'Greyer, quieter', d: '#9DB4CC', l: '#46627F' },
+        { name: 'Blue: navy', job: 'Deeper, more saturated', d: '#7EA2F2', l: '#2D4F9E' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

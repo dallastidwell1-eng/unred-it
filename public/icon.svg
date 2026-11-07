@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Unred It">
+  <!-- Unred It app icon (D-037): upside-down lowercase r, brick red on Deep. -->
+  <rect x="2" y="2" width="96" height="96" rx="24" fill="#1A1A1A"/>
+  <path d="M60 26 V74 M60 56 C60 68 50 75 35 72" fill="none" stroke="#E5736B" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

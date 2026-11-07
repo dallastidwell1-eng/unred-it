@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop: post open over the feed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button,input{font:inherit}
+a{color:#BDBDBD}a:hover{color:#E6E6E6}
+</style>
+</helmet>
+<div style="width: 1280px; height: 860px; position: relative; overflow: hidden; background: #1A1A1A; color: #E6E6E6; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <div style="height: 56px; display: grid; grid-template-columns: 1fr 520px 1fr; align-items: center; padding: 0 16px; border-bottom: 1px solid #2A2A2A; box-sizing: border-box">
+    <div>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border: none; background: none; color: #E6E6E6; font-size: 16px; font-weight: 600; cursor: pointer">Home
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+    </div>
+    <div>
+      <label for="deskSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search Reddit</label>
+      <div style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 10px; background: #212121; border: 1px solid #2A2A2A">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A8A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input id="deskSearch" type="text" placeholder="Search" style="flex: 1; border: none; outline: none; background: none; color: #E6E6E6; font-size: 14px">
+        <span style="font-size: 12px; color: #A8A8A8; border: 1px solid #363636; border-radius: 5px; padding: 1px 6px">/</span>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end">
+      <button type="button" aria-label="Account, 2 unread" style="width: 40px; height: 40px; border: none; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative">
+        <span style="width: 30px; height: 30px; border-radius: 50%; background: #282828; border: 1px solid #2A2A2A; color: #BDBDBD; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-sizing: border-box">D</span>
+        <span aria-hidden="true" style="position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: #E5736B; box-shadow: 0 0 0 2px #1A1A1A"></span>
+      </button>
+    </div>
+  </div>
+
+  <div style="width: 720px; margin: 0 auto">
+    <sc-for list="{{posts}}" as="p" hint-placeholder-count="7">
+      <div style="display: flex; gap: 16px; padding: 16px 4px; border-bottom: 1px solid #2A2A2A; align-items: flex-start">
+        <div aria-hidden="true" style="flex: none; width: 64px; height: 64px; border-radius: 9px; background: {{p.tone}}"></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="font-size: 17px; line-height: 1.38; font-weight: 500; letter-spacing: -0.005em">{{p.title}}</div>
+          <div style="font-size: 13px; color: #A8A8A8">{{p.meta}}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6)"></div>
+  <div role="dialog" aria-label="Post" style="position: absolute; top: 40px; bottom: 0; left: 260px; width: 760px; background: #1A1A1A; border: 1px solid #2A2A2A; border-bottom: none; border-radius: 16px 16px 0 0; box-shadow: 0 -12px 48px rgba(0,0,0,0.45); display: flex; flex-direction: column; overflow: hidden">
+    <div style="height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 8px; border-bottom: 1px solid #2A2A2A; flex: none">
+      <button type="button" style="display: flex; align-items: center; gap: 2px; height: 40px; padding: 0 10px 0 4px; border: none; background: none; color: #BDBDBD; font-size: 14px; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>Feed
+      </button>
+      <span style="font-size: 12px; color: #A8A8A8"><span style="border: 1px solid #363636; border-radius: 5px; padding: 1px 6px; margin-right: 6px">Esc</span>to close</span>
+    </div>
+    <div style="flex: 1; overflow: hidden; padding: 20px 40px">
+      <div style="font-size: 13px; color: #A8A8A8">r/woodworking · u/weekend_joiner · 3h</div>
+      <h1 style="margin: 8px 0 18px; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -0.02em">Finished my first walnut dining table after eight months of weekends</h1>
+      <div role="img" aria-label="Post image (placeholder)" style="height: 470px; border-radius: 12px; background: #3A3C40; color: rgba(255,255,255,0.55); display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; font-size: 13px">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+        <span>Full image, click to zoom</span>
+      </div>
+      <div style="margin-top: 14px; display: flex; align-items: center; gap: 4px; height: 50px; border-top: 1px solid #2A2A2A">
+        <button type="button" aria-label="Upvote" style="width: 40px; height: 40px; border: none; background: none; color: #E2C98A; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+        <span style="font-size: 14px; font-weight: 600; color: #E2C98A">2.4k</span>
+        <button type="button" aria-label="Downvote" style="width: 40px; height: 40px; border: none; background: none; color: #BDBDBD; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
+        <button type="button" style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border: none; background: none; color: #BDBDBD; font-size: 14px; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>186 comments</button>
+        <div style="flex: 1"></div>
+        <button type="button" aria-label="Save" style="width: 40px; height: 40px; border: none; background: none; color: #BDBDBD; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"></path></svg></button>
+        <button type="button" aria-label="Share" style="width: 40px; height: 40px; border: none; background: none; color: #BDBDBD; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: -10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { posts: [
+      { tone: '#3A3C40', title: 'Finished my first walnut dining table after eight months of weekends', meta: 'r/woodworking · 3h · 2.4k · 186 comments' },
+      { tone: '#212121', title: 'How did ordinary travelers plan multi-day trips on foot before printed road maps were common?', meta: 'r/AskHistorians · 5h · 1.1k · 342 comments' },
+      { tone: '#2B3340', title: 'Milky Way core over my backyard, 40 stacked exposures', meta: 'r/astrophotography · 2h · 5.8k · 410 comments' },
+      { tone: '#33363B', title: 'The quiet comeback of the RSS reader', meta: 'r/technology · 6h · 3.2k · 1.2k comments' },
+      { tone: '#212121', title: 'What is one technique that changed how you cook?', meta: 'r/Cooking · 1h · 640 · 98 comments' },
+      { tone: '#2E3540', title: 'Morning fog filling the valley, Oregon [OC]', meta: 'r/LandscapePhotography · 4h · 8.9k · 212 comments' },
+      { tone: '#30343A', title: 'Rebuilt a 1970s drafting stool with new upholstery', meta: 'r/DIY · 7h · 1.9k · 77 comments' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

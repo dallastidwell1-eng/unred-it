@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unred It wordmark and turned-r icon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Inter+Tight:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#4D4D4D}a:hover{color:#222222}
+</style>
+</helmet>
+<div style="width: 1640px; height: 1320px; box-sizing: border-box; padding: 32px; background: #D6D6D6; color: #222222; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; gap: 30px">
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em">Wordmark <span style="font-weight: 400; color: #4D4D4D">· chosen: #1, the pun in red (D-036) · shown with the turned-r icon (version 1)</span></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+      <sc-for list="{{lockups}}" as="m" hint-placeholder-count="2">
+        <div style="height: 140px; border-radius: 16px; background: {{m.bg}}; color: {{m.text}}; display: flex; align-items: center; gap: 22px; padding: 0 40px; font-family: 'Inter Tight', Inter, sans-serif; font-size: 56px; font-weight: 600; letter-spacing: -0.035em; line-height: 1">
+          <svg width="72" height="72" viewBox="0 0 100 100" aria-hidden="true"><rect x="2" y="2" width="96" height="96" rx="24" fill="#1A1A1A" stroke="{{m.tileLine}}" stroke-width="2"></rect><path d="M60 26 V74 M60 56 C60 68 50 75 35 72" fill="none" stroke="#E5736B" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span>un<span style="color: {{m.red}}">red</span> it</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em">App icon: upside-down lowercase r, red on black <span style="font-weight: 400; color: #4D4D4D">· store size, then 48, 32 and 16 px, then in a browser toolbar</span></div>
+    <sc-for list="{{icons}}" as="i" hint-placeholder-count="4">
+      <div style="display: grid; grid-template-columns: 330px 140px 48px 32px 16px minmax(0, 1fr); gap: 26px; align-items: center">
+        <div style="display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 15px; font-weight: 600">{{i.label}}</span>
+          <span style="font-size: 13px; line-height: 1.4; color: #4D4D4D">{{i.note}}</span>
+        </div>
+        <sc-for list="{{i.cells}}" as="c" hint-placeholder-count="4">
+          <svg width="{{c.size}}" height="{{c.size}}" viewBox="0 0 100 100" role="img" aria-label="{{i.label}} at {{c.size}} pixels">
+            <rect x="2" y="2" width="96" height="96" rx="24" fill="{{i.tile}}" stroke="#363636" stroke-width="2"></rect>
+            <sc-if value="{{i.isDrawn}}" hint-placeholder-val="{{ true }}">
+              <path d="M60 26 V74 M60 56 C60 68 50 75 35 72" fill="none" stroke="{{i.red}}" stroke-width="{{i.weight}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            </sc-if>
+            <sc-if value="{{i.isGlyph}}" hint-placeholder-val="{{ false }}">
+              <text x="50" y="70" transform="rotate(180 50 50)" text-anchor="middle" fill="{{i.red}}" style="font-family: 'Inter Tight', Inter, sans-serif; font-size: 82px; font-weight: {{i.fontWeight}}">r</text>
+            </sc-if>
+          </svg>
+        </sc-for>
+        <div style="height: 40px; max-width: 420px; border-radius: 8px; background: #2B2A33; display: flex; align-items: center; gap: 14px; padding: 0 14px">
+          <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 4px; background: #5B5B66"></span>
+          <span aria-hidden="true" style="flex: 1; height: 26px; border-radius: 6px; background: #1C1B22"></span>
+          <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 50%; background: #5B5B66"></span>
+          <svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="{{i.label}} in a browser toolbar">
+            <rect x="2" y="2" width="96" height="96" rx="24" fill="{{i.tile}}"></rect>
+            <sc-if value="{{i.isDrawn}}" hint-placeholder-val="{{ true }}">
+              <path d="M60 26 V74 M60 56 C60 68 50 75 35 72" fill="none" stroke="{{i.red}}" stroke-width="{{i.weight}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            </sc-if>
+            <sc-if value="{{i.isGlyph}}" hint-placeholder-val="{{ false }}">
+              <text x="50" y="70" transform="rotate(180 50 50)" text-anchor="middle" fill="{{i.red}}" style="font-family: 'Inter Tight', Inter, sans-serif; font-size: 82px; font-weight: {{i.fontWeight}}">r</text>
+            </sc-if>
+          </svg>
+          <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 4px; background: #5B5B66"></span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="font-size: 13px; line-height: 1.5; color: #4D4D4D; max-width: 1100px">Why it works: an upside-down r is an "r" undone, so the icon tells the same joke as the name (un-red). On black it stays readable at 16 px because it is one bold stroke with one curve. Versions 1 and 2 are drawn shapes (crisp at every size; we own the exact form). Versions 3 and 4 use the Inter Tight letter itself, so the icon matches the wordmark's typeface exactly.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sizes = [140, 48, 32, 16].map((size) => ({ size }));
+    const icon = (o) => ({ ...o, cells: sizes, isGlyph: !o.isDrawn });
+    return {
+      lockups: [
+        { bg: '#1A1A1A', text: '#E6E6E6', red: '#E5736B', tileLine: '#363636' },
+        { bg: '#FAFAFA', text: '#222222', red: '#C2413A', tileLine: '#1A1A1A' }
+      ],
+      icons: [
+        icon({ label: '1. Drawn, brick red on Deep', note: 'Custom stroke, brick #E5736B on #1A1A1A. Matches the app’s red exactly.', isDrawn: true, tile: '#1A1A1A', red: '#E5736B', weight: 11, fontWeight: 700 }),
+        icon({ label: '2. Drawn, bright red on true black', note: 'Bright red #F2605D on #000000. More punch in the store and toolbar.', isDrawn: true, tile: '#000000', red: '#F2605D', weight: 12, fontWeight: 700 }),
+        icon({ label: '3. Typeface r, brick on Deep', note: 'Inter Tight bold, turned over. Same letterform as the wordmark.', isDrawn: false, tile: '#1A1A1A', red: '#E5736B', weight: 11, fontWeight: 700 }),
+        icon({ label: '4. Typeface r, extra bold, bright red on black', note: 'Inter Tight extra bold for a heavier, more graphic mark.', isDrawn: false, tile: '#000000', red: '#F2605D', weight: 12, fontWeight: 800 })
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

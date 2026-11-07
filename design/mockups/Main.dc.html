@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unred It phone prototype</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit}
+a{color:inherit}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: {{t.bg}}; color: {{t.text}}; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+  <!-- Top bar -->
+  <div style="height: 52px; display: flex; align-items: center; gap: 4px; padding: 0 6px 0 8px; border-bottom: 1px solid {{t.line}}; box-sizing: border-box; background: {{t.bg}}">
+    <button type="button" style="display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: none; background: none; color: {{t.text}}; font-size: 17px; font-weight: 600; cursor: pointer; letter-spacing: -0.01em">Home
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: {{t.faint}}"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <div style="flex: 1"></div>
+    <button type="button" aria-label="Search" style="width: 44px; height: 44px; border: none; background: none; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    </button>
+    <button type="button" aria-label="Account, 2 unread" style="width: 44px; height: 44px; border: none; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative">
+      <span style="width: 28px; height: 28px; border-radius: 50%; background: {{t.raised}}; border: 1px solid {{t.line}}; color: {{t.muted}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-sizing: border-box">D</span>
+      <span aria-hidden="true" style="position: absolute; top: 9px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: {{t.red}}; box-shadow: 0 0 0 2px {{t.bg}}"></span>
+    </button>
+  </div>
+
+  <!-- Feed (always mounted, so its scroll position survives) -->
+  <div style="height: 792px; overflow-y: auto">
+    <sc-if value="{{isCompact}}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{posts}}" as="p" hint-placeholder-count="6">
+        <div style="display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid {{t.line}}; align-items: flex-start">
+          <button type="button" onClick="{{p.open}}" aria-label="Open post" style="flex: none; width: 52px; height: 52px; border-radius: 8px; border: none; padding: 0; background: {{p.tone}}; color: {{p.glyph}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <sc-if value="{{p.isImage}}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg></sc-if>
+            <sc-if value="{{p.isText}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"></path></svg></sc-if>
+            <sc-if value="{{p.isLink}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg></sc-if>
+          </button>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <button type="button" onClick="{{p.open}}" style="border: none; background: none; padding: 0; text-align: left; cursor: pointer; font-size: 16px; line-height: 1.38; font-weight: 500; color: {{t.text}}; letter-spacing: -0.005em">{{p.title}}</button>
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.faint}}; flex-wrap: wrap">
+              <span>{{p.sub}}</span><span aria-hidden="true">·</span><span>{{p.age}}</span><span aria-hidden="true">·</span>
+              <span style="display: inline-flex; align-items: center; gap: 3px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>{{p.score}}</span>
+              <span aria-hidden="true">·</span>
+              <button type="button" onClick="{{p.comments}}" aria-label="{{p.comLabel}}" style="display: inline-flex; align-items: center; gap: 4px; border: none; background: none; color: {{t.muted}}; font-size: 13px; cursor: pointer; padding: 14px 10px; margin: -14px -10px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>{{p.ncom}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{isCard}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 4px 0 16px">
+      <sc-for list="{{posts}}" as="p" hint-placeholder-count="4">
+        <div style="margin: 12px 12px 0; background: {{t.surface}}; border: 1px solid {{t.line}}; border-radius: 14px; overflow: hidden">
+          <div style="padding: 14px 16px 0; font-size: 13px; color: {{t.faint}}">{{p.sub}} · {{p.age}}</div>
+          <button type="button" onClick="{{p.open}}" style="display: block; width: 100%; border: none; background: none; text-align: left; cursor: pointer; padding: 6px 16px 12px; font-size: 18px; font-weight: 600; line-height: 1.3; color: {{t.text}}; letter-spacing: -0.01em">{{p.title}}</button>
+          <sc-if value="{{p.isImage}}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{p.open}}" aria-label="Open image" style="display: flex; width: 100%; height: 220px; border: none; padding: 0; background: {{p.tone}}; color: {{p.glyph}}; align-items: center; justify-content: center; cursor: pointer">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+            </button>
+          </sc-if>
+          <sc-if value="{{p.isText}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 0 16px 4px; font-size: 15px; line-height: 1.5; color: {{t.muted}}; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{p.body}}</div>
+          </sc-if>
+          <sc-if value="{{p.isLink}}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{p.open}}" style="display: flex; width: calc(100% - 32px); margin: 0 16px; gap: 10px; align-items: center; border: 1px solid {{t.line}}; border-radius: 10px; background: {{t.bg}}; padding: 10px 12px; color: {{t.muted}}; font-size: 13px; cursor: pointer; text-align: left; box-sizing: border-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg>{{p.source}}
+            </button>
+          </sc-if>
+          <div style="display: flex; align-items: center; gap: 16px; padding: 12px 16px 14px; font-size: 13px; color: {{t.faint}}">
+            <span style="display: inline-flex; align-items: center; gap: 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>{{p.score}}</span>
+            <button type="button" onClick="{{p.comments}}" aria-label="{{p.comLabel}}" style="display: inline-flex; align-items: center; gap: 5px; border: none; background: none; color: {{t.muted}}; font-size: 13px; cursor: pointer; padding: 14px 10px; margin: -14px -10px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>{{p.ncom}}
+            </button>
+          </div>
+        </div>
+      </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- Content layer: slides over the live feed -->
+  <sc-if value="{{showPost}}" hint-placeholder-val="{{ false }}">
+    <button type="button" onClick="{{back}}" aria-label="Close post" style="position: absolute; inset: 0; border: none; padding: 0; background: {{t.dim}}; cursor: pointer"></button>
+    <div style="position: absolute; left: 0; right: 0; top: 12px; bottom: 0; background: {{t.bg}}; border-radius: 16px 16px 0 0; border-top: 1px solid {{t.line}}; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -8px 32px rgba(0,0,0,0.25)">
+      <div aria-hidden="true" style="width: 36px; height: 4px; border-radius: 2px; background: {{t.line2}}; margin: 8px auto 0"></div>
+      <div style="height: 48px; display: flex; align-items: center; padding: 0 6px; flex: none">
+        <button type="button" onClick="{{back}}" style="display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 10px 0 6px; border: none; background: none; color: {{t.muted}}; font-size: 15px; cursor: pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>Feed
+        </button>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding: 0 20px 28px">
+        <div style="font-size: 13px; color: {{t.faint}}">{{cur.sub}} · {{cur.author}} · {{cur.age}}</div>
+        <h1 style="margin: 8px 0 16px; font-size: 22px; line-height: 1.28; font-weight: 600; letter-spacing: -0.015em; color: {{t.text}}">{{cur.title}}</h1>
+        <sc-if value="{{cur.isImage}}" hint-placeholder-val="{{ true }}">
+          <div role="img" aria-label="Post image (placeholder)" style="height: 300px; border-radius: 12px; background: {{cur.tone}}; color: {{cur.glyph}}; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; font-size: 13px">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+            <span>Full image, tap to zoom</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{cur.isText}}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; font-size: 17px; line-height: 1.6; color: {{t.text}}">{{cur.body}}</p>
+        </sc-if>
+        <sc-if value="{{cur.isLink}}" hint-placeholder-val="{{ false }}">
+          <div style="border: 1px solid {{t.line}}; border-radius: 14px; overflow: hidden; background: {{t.surface}}">
+            <div role="img" aria-label="Article preview image (placeholder)" style="height: 170px; background: {{cur.tone}}; color: {{cur.glyph}}; display: flex; align-items: center; justify-content: center">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+            </div>
+            <div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+              <div style="font-size: 12px; color: {{t.faint}}; letter-spacing: 0.02em">{{cur.source}}</div>
+              <div style="font-size: 16px; font-weight: 600; line-height: 1.35; color: {{t.text}}">{{cur.title}}</div>
+              <div style="font-size: 14px; line-height: 1.5; color: {{t.muted}}">{{cur.summary}}</div>
+              <a href="https://example.com" style="margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border-radius: 10px; background: {{accent}}; color: {{t.onAccent}}; font-size: 15px; font-weight: 600; text-decoration: none">Open article
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"></path></svg>
+              </a>
+            </div>
+          </div>
+        </sc-if>
+        <div style="margin-top: 16px; display: flex; align-items: center; gap: 4px; border-top: 1px solid {{t.line}}; border-bottom: 1px solid {{t.line}}; height: 52px">
+          <button type="button" onClick="{{upvote}}" aria-label="Upvote" style="width: 44px; height: 44px; border: none; background: none; color: {{upColor}}; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -12px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+          </button>
+          <span style="font-size: 14px; font-weight: 600; color: {{scoreColor}}; background: {{scoreBg}}; padding: 3px 8px; border-radius: 7px; min-width: 32px; text-align: center">{{cur.score}}</span>
+          <button type="button" onClick="{{downvote}}" aria-label="Downvote" style="width: 44px; height: 44px; border: none; background: none; color: {{downColor}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>
+          </button>
+          <button type="button" onClick="{{cur.comments}}" style="display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: none; background: none; color: {{t.muted}}; font-size: 14px; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>{{cur.ncom}} comments
+          </button>
+          <div style="flex: 1"></div>
+          <button type="button" aria-label="Save" style="width: 44px; height: 44px; border: none; background: none; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>
+          </button>
+          <button type="button" aria-label="Share" style="width: 44px; height: 44px; border: none; background: none; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: -12px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Comments view: you click into it -->
+  <sc-if value="{{showComments}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: {{t.bg}}; display: flex; flex-direction: column">
+      <div style="height: 52px; display: flex; align-items: center; padding: 0 6px; border-bottom: 1px solid {{t.line}}; flex: none; box-sizing: border-box">
+        <button type="button" onClick="{{back}}" style="display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 10px 0 6px; border: none; background: none; color: {{t.muted}}; font-size: 15px; cursor: pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>{{backLabel}}
+        </button>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding-bottom: 32px">
+        <div style="padding: 14px 16px 0">
+          <div style="font-size: 13px; color: {{t.faint}}">{{cur.sub}} · {{cur.author}} · {{cur.age}}</div>
+          <h1 style="margin: 6px 0 4px; font-size: 19px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; color: {{t.text}}">{{cur.title}}</h1>
+          <div style="display: flex; align-items: center; gap: 4px; height: 48px">
+            <button type="button" onClick="{{upvote}}" aria-label="Upvote" style="width: 44px; height: 44px; border: none; background: none; color: {{upColor}}; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -12px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+            </button>
+            <span style="font-size: 14px; font-weight: 600; color: {{scoreColor}}; background: {{scoreBg}}; padding: 3px 8px; border-radius: 7px">{{cur.score}}</span>
+            <button type="button" onClick="{{downvote}}" aria-label="Downvote" style="width: 44px; height: 44px; border: none; background: none; color: {{downColor}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>
+            </button>
+            <div style="flex: 1"></div>
+            <button type="button" aria-label="Save" style="width: 44px; height: 44px; border: none; background: none; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>
+            </button>
+            <button type="button" aria-label="Share" style="width: 44px; height: 44px; border: none; background: none; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: -12px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 16px; height: 44px; border-top: 1px solid {{t.line}}; border-bottom: 1px solid {{t.line}}; font-size: 13px; color: {{t.faint}}">
+          <button type="button" style="display: flex; align-items: center; gap: 4px; height: 44px; border: none; background: none; padding: 0; color: {{t.muted}}; font-size: 13px; font-weight: 600; cursor: pointer">Best
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <span aria-hidden="true">·</span><span>{{cur.ncom}} comments</span>
+          <div style="flex: 1"></div>
+          <button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid {{t.line2}}; background: none; color: {{t.text}}; font-size: 13px; font-weight: 500; cursor: pointer">Comment</button>
+        </div>
+
+        <sc-if value="{{hasThread}}" hint-placeholder-val="{{ true }}">
+          <div style="padding-top: 4px">
+          <sc-for list="{{thread}}" as="c" hint-placeholder-count="6">
+            <div style="position: relative; padding: 12px 16px 2px {{c.pad}}px">
+              <sc-for list="{{c.guides}}" as="g">
+                <div aria-hidden="true" style="position: absolute; top: 0; bottom: 0; left: {{g.left}}px; width: 1px; background: {{t.line2}}"></div>
+              </sc-for>
+              <sc-if value="{{c.showOwnLine}}" hint-placeholder-val="{{ false }}">
+                <div aria-hidden="true" style="position: absolute; top: 36px; bottom: 0; left: {{c.ownLeft}}px; width: 1px; background: {{t.line2}}"></div>
+              </sc-if>
+              <div style="display: flex; align-items: center; gap: 6px; min-height: 24px">
+                <sc-if value="{{c.hasKids}}" hint-placeholder-val="{{ true }}">
+                  <button type="button" onClick="{{c.toggle}}" aria-label="{{c.toggleLabel}}" aria-expanded="{{c.expanded}}" style="width: 44px; height: 44px; margin: -14px; padding: 0; border: none; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 1; flex: none">
+                    <span style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid {{t.marker}}; background: {{t.bg}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; box-sizing: border-box">
+                      <sc-if value="{{c.collapsed}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></sc-if>
+                      <sc-if value="{{c.expanded}}" hint-placeholder-val="{{ true }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></sc-if>
+                    </span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{c.noKids}}" hint-placeholder-val="{{ false }}">
+                  <span aria-hidden="true" style="width: 16px; flex: none"></span>
+                </sc-if>
+                <span style="font-size: 13px; font-weight: 600; color: {{c.authorColor}}">{{c.author}}</span>
+                <span style="font-size: 13px; color: {{t.faint}}">· {{c.age}} · {{c.score}} points</span>
+              </div>
+              <sc-if value="{{c.collapsed}}" hint-placeholder-val="{{ false }}">
+                <div style="padding: 4px 0 10px 22px; font-size: 13px; color: {{t.faint}}">{{c.hiddenText}}</div>
+              </sc-if>
+              <sc-if value="{{c.expanded}}" hint-placeholder-val="{{ true }}">
+                <div style="padding-left: 22px">
+                  <p style="margin: 4px 0 0; font-size: 16px; line-height: 1.5; color: {{t.text}}">{{c.body}}</p>
+                  <div style="display: flex; align-items: center; gap: 2px; margin-left: -12px; color: {{t.faint}}">
+                    <button type="button" aria-label="Upvote comment" style="width: 40px; height: 40px; border: none; background: none; color: {{t.faint}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                    </button>
+                    <button type="button" aria-label="Downvote comment" style="width: 40px; height: 40px; border: none; background: none; color: {{t.faint}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>
+                    </button>
+                    <button type="button" style="height: 40px; padding: 0 10px; border: none; background: none; color: {{t.faint}}; font-size: 13px; font-weight: 500; cursor: pointer">Reply</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{noThread}}" hint-placeholder-val="{{ false }}">
+          <div style="margin: 20px 16px; padding: 20px; border: 1px dashed {{t.line2}}; border-radius: 12px; font-size: 14px; line-height: 1.5; color: {{t.muted}}">Placeholder: comment text is written for the walnut table post only. Open that post to try folding threads.</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"blue":{"editor":"enum","options":["dusty","steel","navy"],"default":"dusty"},"darkGround":{"editor":"enum","options":["deep","dim","soft","softer"],"default":"deep"},"lightGround":{"editor":"enum","options":["paper","mist","cloud"],"default":"paper"},"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"view":{"editor":"enum","options":["compact","card"],"default":"compact"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: 'feed', postId: 'p1', from: 'feed', collapsed: {}, votes: {} };
+  }
+  renderVals() {
+    const theme = this.props.theme === 'light' ? 'light' : 'dark';
+    const view = this.props.view === 'card' ? 'card' : 'compact';
+    const dark = theme === 'dark';
+    // Neutral grounds only (R = G = B). Colour lives in the accent alone.
+    const hx = (n) => { const v = Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0'); return '#' + v + v + v; };
+    const DARK = { deep: 0x1A, dim: 0x20, soft: 0x26, softer: 0x2C };
+    const LIGHT = { paper: 0xFA, mist: 0xF3, cloud: 0xEC };
+    // Color roles: grey = everything; blue = actions + downvote; metal = upvote; red = unread only.
+    const BLUE = { dusty: { d: '#8FB0E6', l: '#3A5F98' }, steel: { d: '#9DB4CC', l: '#46627F' }, navy: { d: '#7EA2F2', l: '#2D4F9E' } };
+    const METAL = { pale: { d: '#E2C98A', l: '#8C772C' }, classic: { d: '#D6B26A', l: '#957624' }, antique: { d: '#C9A35A', l: '#86651F' } };
+    const RED = { brick: { d: '#E5736B', l: '#C2413A' }, signal: { d: '#FF6B6B', l: '#D92D2D' } };
+    const b = BLUE[this.props.blue] || BLUE.dusty;
+    const m = METAL.pale;   // owner: dark upvote = pale brass
+    const r = RED.brick;    // owner: dark downvote = brick; also the unread dot
+    const g = dark ? (DARK[this.props.darkGround] || DARK.deep) : (LIGHT[this.props.lightGround] || LIGHT.paper);
+    const t = dark
+      ? { bg: hx(g), surface: hx(g + 7), raised: hx(g + 14), line: hx(g + 16), line2: hx(g + 28), marker: hx(g + 58), text: '#E6E6E6', muted: '#BDBDBD', faint: '#A8A8A8', accent: b.d, onAccent: '#1A1A1A', up: m.d, down: r.d, upChip: 'transparent', upText: m.d, downChip: 'transparent', downText: r.d, red: r.d, dim: 'rgba(0,0,0,0.5)' }
+      : { bg: hx(g), surface: hx(g + 6), raised: hx(g - 10), line: hx(g - 18), line2: hx(g - 36), marker: hx(g - 90), text: '#222222', muted: '#4D4D4D', faint: '#5E5E5E', accent: b.l, onAccent: '#FFFFFF', up: '#E8C04A', down: '#F2605D', upChip: '#E8C04A', upText: '#222222', downChip: '#F2605D', downText: '#222222', red: r.l, dim: 'rgba(0,0,0,0.25)' };
+    const accent = t.accent;
+    const down = t.down;
+    const glyph = dark ? 'rgba(255,255,255,0.55)' : 'rgba(17,18,20,0.4)';
+    const raw = [
+      { id: 'p1', kind: 'image', sub: 'r/woodworking', author: 'u/weekend_joiner', age: '3h', score: '2.4k', ncom: '186', title: 'Finished my first walnut dining table after eight months of weekends', toneD: '#3A3C40', toneL: '#D8DADD' },
+      { id: 'p2', kind: 'text', sub: 'r/AskHistorians', author: 'u/curious_cartographer', age: '5h', score: '1.1k', ncom: '342', title: 'How did ordinary travelers plan multi-day trips on foot before printed road maps were common?', body: 'I mean ordinary people, not merchants or armies. Did they rely on locals, written route lists, landmarks, or something else?' },
+      { id: 'p3', kind: 'image', sub: 'r/astrophotography', author: 'u/dark_sky_diaries', age: '2h', score: '5.8k', ncom: '410', title: 'Milky Way core over my backyard, 40 stacked exposures', toneD: '#2B3340', toneL: '#D2D9E2' },
+      { id: 'p4', kind: 'link', sub: 'r/technology', author: 'u/quiet_feeds', age: '6h', score: '3.2k', ncom: '1.2k', title: 'The quiet comeback of the RSS reader', source: 'longreads.example', summary: '[The article summary from the link preview appears here.]', toneD: '#33363B', toneL: '#DFE1E4' },
+      { id: 'p5', kind: 'text', sub: 'r/Cooking', author: 'u/salt_fat_acid', age: '1h', score: '640', ncom: '98', title: 'What is one technique that changed how you cook?', body: 'Mine was finally learning to salt pasta water properly. Small change, huge difference. What was yours?' },
+      { id: 'p6', kind: 'image', sub: 'r/LandscapePhotography', author: 'u/valley_mornings', age: '4h', score: '8.9k', ncom: '212', title: 'Morning fog filling the valley, Oregon [OC]', toneD: '#2E3540', toneL: '#D6DCE3' }
+    ];
+    const posts = raw.map((p) => ({
+      ...p,
+      isImage: p.kind === 'image', isText: p.kind === 'text', isLink: p.kind === 'link',
+      tone: p.kind === 'text' ? t.surface : (dark ? p.toneD : p.toneL),
+      glyph: p.kind === 'text' ? t.faint : glyph,
+      comLabel: p.ncom + ' comments',
+      open: () => this.setState({ screen: 'post', postId: p.id, from: 'feed' }),
+      comments: () => this.setState({ screen: 'comments', postId: p.id, from: this.state.screen === 'post' ? 'post' : 'feed' })
+    }));
+    const cur = posts.find((p) => p.id === this.state.postId) || posts[0];
+    const vote = this.state.votes[cur.id] || 0;
+    const setVote = (v) => this.setState((s) => ({ votes: { ...s.votes, [cur.id]: (s.votes[cur.id] === v ? 0 : v) } }));
+
+    const tree = [
+      { id: 'c1', author: 'u/oak_and_iron', age: '2h', score: '412', body: 'That grain match across the top is beautiful. How did you handle the glue-up with boards that wide?', kids: [
+        { id: 'c1a', author: 'u/weekend_joiner', op: true, age: '2h', score: '198', body: 'Cauls and a lot of clamps. I glued it in two halves, then joined the halves the next day.', kids: [
+          { id: 'c1a1', author: 'u/oak_and_iron', age: '1h', score: '64', body: 'Smart. Splitting it is what I wish I had done on mine.', kids: [] }
+        ] },
+        { id: 'c1b', author: 'u/sawdust_sunday', age: '2h', score: '87', body: 'What finish did you use? It looks hand-rubbed.', kids: [
+          { id: 'c1b1', author: 'u/weekend_joiner', op: true, age: '1h', score: '92', body: 'Three coats of oil-based wipe-on poly, sanded to 400 between coats.', kids: [] }
+        ] }
+      ] },
+      { id: 'c2', author: 'u/measuretwice', age: '3h', score: '233', body: 'Eight months of weekends shows. The breadboard ends are really clean.', kids: [
+        { id: 'c2a', author: 'u/weekend_joiner', op: true, age: '2h', score: '51', body: 'Thanks. Those took longer than the whole top.', kids: [] }
+      ] },
+      { id: 'c3', author: 'u/minimalist_mike', age: '3h', score: '120', body: 'Table is great. Now the chairs need to catch up.', kids: [] }
+    ];
+    const countAll = (c) => c.kids.reduce((n, k) => n + 1 + countAll(k), 0);
+    const collapsed = this.state.collapsed;
+    const thread = [];
+    const walk = (list, depth) => list.forEach((c) => {
+      const has = c.kids.length > 0;
+      const col = !!collapsed[c.id];
+      const pad = 16 + depth * 22;
+      const guides = [];
+      for (let i = 0; i < depth; i++) guides.push({ left: 16 + i * 22 + 7 });
+      const n = countAll(c);
+      thread.push({
+        ...c, pad, guides,
+        hasKids: has, noKids: !has, collapsed: col, expanded: !col,
+        showOwnLine: has && !col, ownLeft: pad + 7,
+        hiddenText: n + (n === 1 ? ' reply hidden' : ' replies hidden'),
+        authorColor: c.op ? accent : t.muted,
+        toggleLabel: col ? 'Expand thread' : 'Collapse thread',
+        toggle: () => this.setState((s) => ({ collapsed: { ...s.collapsed, [c.id]: !s.collapsed[c.id] } }))
+      });
+      if (!col) walk(c.kids, depth + 1);
+    });
+    walk(tree, 0);
+
+    const screen = this.state.screen;
+    return {
+      t, accent,
+      isCompact: view === 'compact', isCard: view === 'card',
+      posts, cur,
+      showPost: screen === 'post', showComments: screen === 'comments',
+      backLabel: this.state.from === 'post' ? 'Post' : 'Feed',
+      back: () => this.setState((s) => ({ screen: s.screen === 'comments' && s.from === 'post' ? 'post' : 'feed', from: 'feed' })),
+      upvote: () => setVote(1), downvote: () => setVote(-1),
+      upColor: vote === 1 ? t.up : t.muted,
+      downColor: vote === -1 ? t.down : t.muted,
+      scoreBg: vote === 1 ? t.upChip : (vote === -1 ? t.downChip : 'transparent'),
+      scoreColor: vote === 1 ? t.upText : (vote === -1 ? t.downText : t.muted),
+      thread, hasThread: cur.id === 'p1', noThread: cur.id !== 'p1'
+    };
+  }
+}
+</script>
+</body>
+</html>

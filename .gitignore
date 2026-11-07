@@ -1,0 +1,13 @@
+# handoff plugin: local state, never committed
+handoff/_state/
+
+# Dependencies and build output
+node_modules/
+.output/
+.wxt/
+web-ext-artifacts/
+stats.html
+*.log
+
+# Owner reference screenshots: kept on this PC only (third-party page images)
+references/
