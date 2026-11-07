@@ -275,7 +275,7 @@ Source: session 002, owner approved.
 
 ### D-054: Videos play inside the reader; hls.js for sound
 Date: 2026-11-06 · Decider: owner (D-009 approval, on Claude's recommendation)
-Decision: Reddit-hosted videos play in the content layer. Silent clips and GIF-style videos play as plain MP4 with the browser's own player. Videos with sound use hls.js 1.7 (Apache-2.0, light build) to play Reddit's HLS stream, which carries the sound. Adds host permission https://v.redd.it/* (Reddit's video host). If hls.js cannot play, the reader falls back to the silent MP4 and offers "Play on Reddit". Videos from other sites (YouTube and so on) stay as a link out.
+Decision: Reddit-hosted videos play in the content layer. Silent clips and GIF-style videos play as plain MP4 with the browser's own player. Videos with sound use hls.js 1.7 (Apache-2.0) to play Reddit's HLS stream, which carries the sound. It must be the full build: the light build leaves out alternate-audio tracks, and Reddit delivers sound that way (found in the owner's test, session 002); the full build makes reader.js about 620 kB. Adds host permission https://v.redd.it/* (Reddit's video host). If hls.js cannot play, the reader falls back to the silent MP4 and offers "Play on Reddit". Videos from other sites (YouTube and so on) stay as a link out.
 Source: session 002, owner chose "Add hls.js" after testing the content layer ("Video not playing").
 
 ### D-055: Galleries: one picture at a time with buttons, no swipe

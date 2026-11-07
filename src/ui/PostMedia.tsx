@@ -1,7 +1,7 @@
 // What an opened post shows under its title: text, picture, video, gallery,
 // or a link card. Media keeps its own shape (D-056).
 
-import Hls from 'hls.js/light';
+import Hls from 'hls.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { GalleryItem, Post, VideoInfo } from '../lib/reddit-data';
 import { cleanRedditHtml, safeHref } from '../lib/sanitize';
