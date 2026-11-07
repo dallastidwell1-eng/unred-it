@@ -5,7 +5,7 @@
 // posts from /by_id/, a normal listing address. If /by_id/ fails too, the
 // rows are built from what the search page itself shows.
 
-import { type FeedPage, parseFeedPage, type Post } from './reddit-data';
+import { type Community, type FeedPage, parseFeedPage, type Post } from './reddit-data';
 import type { FetchJson } from './thread-loader';
 
 export type FetchText = (path: string) => Promise<string>;
@@ -18,6 +18,8 @@ export interface SearchHit {
 }
 
 const FULLNAME = /^t3_[a-z0-9]+$/i;
+/** "/r/name/" or "/user/name/" (nothing after the name). */
+const COMMUNITY_PATH = /^\/(r|user)\/([A-Za-z0-9_-]{2,21})\/?$/;
 
 /** The search page address (HTML, not .json), with the paging cursor. */
 export function searchHtmlPath(pathname: string, search: string, after: string | null): string {
@@ -84,7 +86,11 @@ function hitData(block: Element, id: string): Record<string, unknown> {
  * The posts on an old.reddit.com search page, in order, and the cursor for
  * the next page. Subreddit and user results are left out.
  */
-export function parseSearchHtml(html: string): { hits: SearchHit[]; after: string | null } {
+export function parseSearchHtml(html: string): {
+  hits: SearchHit[];
+  after: string | null;
+  communities: Community[];
+} {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const hits: SearchHit[] = [];
   const seen = new Set<string>();
@@ -112,6 +118,33 @@ export function parseSearchHtml(html: string): { hits: SearchHit[]; after: strin
     }
   }
 
+  // Subreddit and user results (t5 blocks): name from the first link to
+  // /r/name/ or /user/name/ inside the block.
+  const communities: Community[] = [];
+  const names = new Set<string>();
+  for (const block of Array.from(doc.querySelectorAll('[data-fullname^="t5_"]'))) {
+    for (const link of Array.from(block.querySelectorAll('a[href]'))) {
+      const match = COMMUNITY_PATH.exec(pathOf(link.getAttribute('href')));
+      let name = match?.[2];
+      if (!match || !name) {
+        continue;
+      }
+      // A profile can also appear as its own subreddit, r/u_name.
+      const profile = match[1] === 'user' || /^u_/i.test(name);
+      if (match[1] === 'r' && profile) {
+        name = name.slice(2);
+      }
+      const kind = profile ? 'user' : 'subreddit';
+      const key = `${kind}:${name.toLowerCase()}`;
+      if (!names.has(key)) {
+        names.add(key);
+        const body = block.querySelector('.search-result-body')?.textContent ?? '';
+        communities.push({ kind, name, description: body.replace(/\s+/g, ' ').trim() });
+      }
+      break;
+    }
+  }
+
   // The posts' "next" link carries after=t3_...; the subreddit list's does not.
   let after: string | null = null;
   for (const link of Array.from(doc.querySelectorAll('a[href*="after=t3_"]'))) {
@@ -123,7 +156,7 @@ export function parseSearchHtml(html: string): { hits: SearchHit[]; after: strin
       after = value;
     }
   }
-  return { hits, after };
+  return { hits, after, communities };
 }
 
 /** Rows built only from the search page, when /by_id/ is not available. */
@@ -142,11 +175,15 @@ export async function loadSearchPage(
   search: string,
   after: string | null,
 ): Promise<FeedPage> {
-  const { hits, after: next } = parseSearchHtml(
-    await fetchText(searchHtmlPath(pathname, search, after)),
-  );
+  const {
+    hits,
+    after: next,
+    communities,
+  } = parseSearchHtml(await fetchText(searchHtmlPath(pathname, search, after)));
+  // Subreddits and users belong above the first page only.
+  const extra = after === null ? { communities } : {};
   if (hits.length === 0) {
-    return { posts: [], after: null };
+    return { posts: [], after: null, ...extra };
   }
   const fallback = postsFromHits(hits);
   try {
@@ -156,8 +193,9 @@ export async function loadSearchPage(
     return {
       posts: fallback.map((post) => byName.get(post.fullname) ?? post),
       after: next,
+      ...extra,
     };
   } catch {
-    return { posts: fallback, after: next };
+    return { posts: fallback, after: next, ...extra };
   }
 }

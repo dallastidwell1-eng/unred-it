@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
 import { searchPath, type SearchInfo } from '../lib/feed-route';
 import type { Account } from '../lib/reddit-client';
-import type { FeedPage, Post, VoteDirection } from '../lib/reddit-data';
+import type { Community, FeedPage, Post, VoteDirection } from '../lib/reddit-data';
 import { currentFeed, type Subreddit } from '../lib/subreddits';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { isPlainClick } from './clicks';
@@ -14,6 +14,7 @@ import { CommentsView } from './CommentsView';
 import { ContentLayer } from './ContentLayer';
 import { FeedPicker } from './FeedPicker';
 import { FeedRow } from './FeedRow';
+import { SearchCommunities } from './SearchCommunities';
 import { TopBar } from './TopBar';
 
 /** Where the data comes from: Reddit in the extension, samples in the preview. */
@@ -69,6 +70,8 @@ function isOurState(value: unknown): value is NavState {
 
 export function App({ source, note }: { source: FeedSource; note?: string }) {
   const [posts, setPosts] = useState<Post[]>([]);
+  /** A search's matching subreddits and users, shown above its posts. */
+  const [communities, setCommunities] = useState<Community[]>([]);
   const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState('');
   const after = useRef<string | null>(null);
@@ -266,6 +269,9 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     setStatus('loading');
     try {
       const page = await source.load(after.current);
+      if (page.communities) {
+        setCommunities(page.communities);
+      }
       const seen = new Set<string>();
       setPosts((previous) => {
         previous.forEach((p) => seen.add(p.fullname));
@@ -346,6 +352,13 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
             )}
           </div>
         )}
+        <SearchCommunities
+          items={communities}
+          hasPosts={posts.length > 0}
+          onOpen={(path) => {
+            go(path, false);
+          }}
+        />
         <ul class="feed">
           {posts.map((post) => (
             <FeedRow

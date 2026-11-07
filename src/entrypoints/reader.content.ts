@@ -113,10 +113,8 @@ export default defineContentScript({
     // visible font swap.
     const fontsLoaded = loadFonts().catch(() => false);
     whenBodyReady(() => {
-      void fontsLoaded.then((ok) => {
-        // Temporary M4 note for the owner's test: which font is in use.
-        const note = ok ? 'Font: Inter' : 'Font: system (Inter did not load)';
-        mountReader(document.body, redditSource(), note);
+      void fontsLoaded.then(() => {
+        mountReader(document.body, redditSource());
       });
     });
   },

@@ -246,6 +246,44 @@ button {
   font-weight: 600;
 }
 
+/* Matching subreddits and users above a search's posts (picker row style). */
+.results {
+  margin: 0 auto;
+  padding-top: 4px;
+}
+
+.results .sub-list {
+  border-bottom: 1px solid var(--line);
+}
+
+.community-row {
+  height: auto;
+  min-height: 48px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.community-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.community-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--faint);
+}
+
+.results-posts {
+  padding-top: 18px;
+}
+
 .picker svg {
   color: var(--muted);
   transition: rotate 180ms ease-out;
@@ -669,7 +707,8 @@ button {
 
 @media (min-width: 768px) {
   .feed,
-  .search-head {
+  .search-head,
+  .results {
     max-width: 680px;
   }
 }
@@ -733,7 +772,8 @@ button {
   }
 
   .feed,
-  .search-head {
+  .search-head,
+  .results {
     max-width: 720px;
   }
 

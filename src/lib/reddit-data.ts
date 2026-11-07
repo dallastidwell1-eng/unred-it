@@ -67,6 +67,17 @@ export interface PreviewImage {
 export interface FeedPage {
   posts: Post[];
   after: string | null;
+  /** On a search's first page: matching subreddits and users (D-058). */
+  communities?: Community[];
+}
+
+/** A subreddit or user that matches a search. */
+export interface Community {
+  kind: 'subreddit' | 'user';
+  /** Without the "r/" or "u/". */
+  name: string;
+  /** Reddit's short description, or "". */
+  description: string;
 }
 
 export interface Comment {

@@ -6,7 +6,7 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/inter-tight';
 import type { CommentNode, ThreadItem } from '../src/lib/comments';
 import { feedTitle, searchInfo } from '../src/lib/feed-route';
-import type { FeedPage, Post } from '../src/lib/reddit-data';
+import type { Community, FeedPage, Post } from '../src/lib/reddit-data';
 import { sortSubreddits, type Subreddit } from '../src/lib/subreddits';
 import type { FeedSource } from '../src/ui/App';
 import { mountReader } from '../src/ui/mount';
@@ -334,7 +334,12 @@ const source: FeedSource = {
       // A pretend search: sample posts whose title holds the words.
       const words = SEARCH.query.toLowerCase();
       const hits = [...PAGE_1, ...PAGE_2].filter((p) => p.title.toLowerCase().includes(words));
-      return { posts: hits, after: null };
+      const communities: Community[] = [
+        { kind: 'subreddit', name: 'AskHistorians', description: 'The Portal for Public History.' },
+        { kind: 'subreddit', name: 'askhistorians_NSFW', description: '' },
+        { kind: 'user', name: 'askhistorians', description: '' },
+      ];
+      return { posts: hits, after: null, communities: words === 'zzz' ? [] : communities };
     }
     return after ? { posts: PAGE_2, after: null } : { posts: PAGE_1, after: 'page2' };
   },

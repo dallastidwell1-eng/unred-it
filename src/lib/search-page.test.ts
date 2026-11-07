@@ -8,6 +8,20 @@ const PAGE = `
 <div class="search-result-group">
   <div class="search-result search-result-subreddit" data-fullname="t5_2ssp3">
     <a class="search-title" href="https://old.reddit.com/r/AskHistorians/">AskHistorians</a>
+    <a class="option" href="#">leave</a>
+    <a class="search-subreddit-link" href="https://old.reddit.com/r/AskHistorians/">r/AskHistorians</a>
+    <div class="search-result-body"><p>The Portal for
+      Public History.</p></div>
+    <a href="https://old.reddit.com/r/AskHistorians/search?restrict_sr=on">search within</a>
+  </div>
+  <div class="search-result search-result-subreddit" data-fullname="t5_abc">
+    <a class="search-subreddit-link" href="https://old.reddit.com/user/askhistorians/">u/askhistorians</a>
+  </div>
+  <div class="search-result search-result-subreddit" data-fullname="t5_def">
+    <a class="search-subreddit-link" href="/r/u_somebody/">u/somebody</a>
+  </div>
+  <div class="search-result search-result-subreddit" data-fullname="t5_ghi">
+    <a class="search-subreddit-link" href="/r/askhistorians_NSFW/">r/askhistorians_NSFW</a>
   </div>
   <footer class="nextprev">view more: <a href="https://old.reddit.com/search?q=x&amp;type=sr&amp;after=t5_2ssp3" rel="nofollow next">next ›</a></footer>
 </div>
@@ -80,6 +94,15 @@ describe('parseSearchHtml', () => {
     });
   });
 
+  it('reads the subreddit and user results, users told apart from subreddits', () => {
+    expect(parseSearchHtml(PAGE).communities).toEqual([
+      { kind: 'subreddit', name: 'AskHistorians', description: 'The Portal for Public History.' },
+      { kind: 'user', name: 'askhistorians', description: '' },
+      { kind: 'user', name: 'somebody', description: '' },
+      { kind: 'subreddit', name: 'askhistorians_NSFW', description: '' },
+    ]);
+  });
+
   it('takes the posts cursor, not the subreddit list cursor', () => {
     expect(parseSearchHtml(PAGE).after).toBe('t3_bbb222');
   });
@@ -94,6 +117,7 @@ describe('parseSearchHtml', () => {
     expect(parseSearchHtml('<p>there doesn’t seem to be anything here</p>')).toEqual({
       hits: [],
       after: null,
+      communities: [],
     });
   });
 });
@@ -113,6 +137,18 @@ describe('loadSearchPage', () => {
     );
     expect(page.posts.map((post) => post.title)).toEqual(['Full t3_aaa111', 'Full t3_bbb222']);
     expect(page.after).toBe('t3_bbb222');
+    expect(page.communities).toHaveLength(4);
+  });
+
+  it('gives subreddits and users with the first page only', async () => {
+    const page = await loadSearchPage(
+      () => Promise.resolve(PAGE),
+      () => Promise.resolve(listing([])),
+      '/search',
+      '?q=x',
+      't3_previous',
+    );
+    expect(page.communities).toBeUndefined();
   });
 
   it('uses the search page rows when /by_id/ is refused', async () => {
@@ -136,7 +172,7 @@ describe('loadSearchPage', () => {
       '?q=x',
       null,
     );
-    expect(page).toEqual({ posts: [], after: null });
+    expect(page).toEqual({ posts: [], after: null, communities: [] });
     expect(fetchJson).not.toHaveBeenCalled();
   });
 
