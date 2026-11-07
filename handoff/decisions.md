@@ -242,3 +242,8 @@ Source: session 002, step 4 (scaffold); the owner can overrule.
 Date: 2026-11-06 · Decider: Claude (from the OQ-011 spike result; the owner can overrule)
 Decision: On old.reddit.com the content script uses its own fetch (host permission, credentials included) to read the user's pages as .json (feeds, posts with comments, /api/me.json) and to send actions the way old.reddit.com does (form body plus the session modhash, for example /api/vote). The modhash is held in memory only; it is never shown, logged or stored. D-021's rebuilt views go ahead; the restyle fallback is not needed. Reddit's terms question stays open (OQ-014).
 Source: session 002, spike evidence in OQ-011 and the session log.
+
+### D-048: Public repository with a fresh history
+Date: 2026-11-06 · Decider: owner (approved creation and push, D-009; chose the fresh history)
+Decision: The public repository is https://github.com/dallastidwell1-eng/unred-it (default branch master). It starts from a fresh, single-commit history so that earlier local commits (one held the owner's Reddit username) are not published. references/ (the owner's third-party reference screenshots) stays on the PC only and is git-ignored. The old local history is kept in the local branch `backup/pre-public-2026-11-06`, which is never pushed. CI (.github/workflows/ci.yml) runs `npm run check` on every push to master and on pull requests, with actions pinned to commit SHAs. Text files use LF line endings (.gitattributes).
+Source: session 002, owner: "Fresh history" and "Approve: unred-it".

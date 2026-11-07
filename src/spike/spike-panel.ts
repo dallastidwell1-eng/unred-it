@@ -1,4 +1,4 @@
-// OQ-011 data spike (M1, session 002). Temporary: remove before M2.
+// OQ-011 data spike (M1, session 002). Temporary: M2 runs it on the phone; remove it after M2.
 // A test panel on old.reddit.com, shown only when the address ends in
 // #unred-spike. Every network action needs a click; votes also need a confirm.
 // The session's modhash (anti-forgery token) is never shown, logged or stored.
