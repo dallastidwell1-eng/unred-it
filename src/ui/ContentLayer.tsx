@@ -105,6 +105,15 @@ export function ContentLayer({
 
   useDialogKeys(panel, active, onClose);
 
+  // When the comments cover this post, its video stops, so two never play at once.
+  useEffect(() => {
+    if (!active) {
+      panel.current?.querySelectorAll('video').forEach((video) => {
+        video.pause();
+      });
+    }
+  }, [active]);
+
   return (
     <div class="layer-root">
       <div class="scrim" onClick={onClose} />

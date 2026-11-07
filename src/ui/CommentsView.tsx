@@ -17,7 +17,7 @@ import type { Post, VoteDirection } from '../lib/reddit-data';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { VoteBar } from './ContentLayer';
 import { BackIcon, DownIcon, UpIcon } from './icons';
-import { PostText } from './PostMedia';
+import { PostMedia, PostText } from './PostMedia';
 import { useDialogKeys } from './useDialogKeys';
 
 /** What the comments view needs from Reddit (or from the preview's samples). */
@@ -278,26 +278,31 @@ export function CommentsView({
       tabIndex={-1}
       ref={panel}
     >
+      {/* The bar carries the post's name, so the comments start high (owner, session 002). */}
       <div class="comments-head">
         <button class="back" type="button" onClick={onClose}>
           <BackIcon />
           {backLabel}
         </button>
+        <div class="head-title">
+          <div class="meta">
+            {post.over18 && <span class="tag">NSFW</span>}
+            <span>r/{post.subreddit}</span>
+            <span class="dot-sep" aria-hidden="true" />
+            <span>u/{post.author}</span>
+            <span class="dot-sep" aria-hidden="true" />
+            <span>{formatAge(post.createdUtc, now)}</span>
+          </div>
+          <h2 id="comments-title" class="comments-title">
+            {post.title}
+          </h2>
+        </div>
       </div>
       <div class="comments-scroll">
         <div class="comments-column">
           <div class="comments-summary">
-            <div class="meta">
-              {post.over18 && <span class="tag">NSFW</span>}
-              <span>r/{post.subreddit}</span>
-              <span class="dot-sep" aria-hidden="true" />
-              <span>u/{post.author}</span>
-              <span class="dot-sep" aria-hidden="true" />
-              <span>{formatAge(post.createdUtc, now)}</span>
-            </div>
-            <h2 id="comments-title" class="comments-title">
-              {post.title}
-            </h2>
+            {/* The post itself, so the comments have their subject in view. */}
+            <PostMedia post={post} />
             <div class="summary-actions">
               <VoteBar post={post} onVote={onVotePost} />
             </div>
