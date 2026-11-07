@@ -4,6 +4,7 @@
 
 import '@fontsource-variable/inter';
 import '@fontsource-variable/inter-tight';
+import type { CommentNode, ThreadItem } from '../src/lib/comments';
 import type { FeedPage, Post } from '../src/lib/reddit-data';
 import type { FeedSource } from '../src/ui/App';
 import { mountReader } from '../src/ui/mount';
@@ -165,7 +166,104 @@ const PAGE_2: Post[] = Array.from({ length: 6 }, (_, i) =>
   }),
 );
 
+let commentCounter = 0;
+function comment(
+  author: string,
+  html: string,
+  partial: Partial<CommentNode> = {},
+  replies: ThreadItem[] = [],
+): CommentNode {
+  commentCounter += 1;
+  const id = `c${String(commentCounter)}`;
+  return {
+    kind: 'comment',
+    fullname: `t1_${id}`,
+    id,
+    author,
+    bodyHtml: `<div class="md">${html}</div>`,
+    score: 12,
+    scoreHidden: false,
+    likes: null,
+    createdUtc: NOW_S - 3600 * 2,
+    depth: 0,
+    isSubmitter: false,
+    distinguished: '',
+    stickied: false,
+    collapsed: false,
+    permalink: '#',
+    replies,
+    ...partial,
+  };
+}
+
+function sampleThread(): ThreadItem[] {
+  commentCounter = 0;
+  return [
+    comment('helpful_mod', '<p>Please keep the discussion civil. Rule 2 applies.</p>', {
+      distinguished: 'moderator',
+      stickied: true,
+      score: 1,
+    }),
+    comment(
+      'first_reader',
+      '<p>This is the top comment. It has <strong>formatting</strong>, a <a href="https://example.com">link</a>, and a quote:</p><blockquote><p>Quoted text from the post.</p></blockquote>',
+      { score: 1234, likes: true },
+      [
+        comment(
+          'someone',
+          '<p>The post author answers here; their name shows in blue.</p>',
+          { isSubmitter: true, depth: 1, score: 456 },
+          [
+            comment('third_level', '<p>A reply two levels deep.</p>', { depth: 2, score: 88 }, [
+              {
+                kind: 'more',
+                id: 'deep',
+                parentFullname: 't1_c5',
+                count: 0,
+                children: [],
+                depth: 3,
+              },
+            ]),
+          ],
+        ),
+        comment('another_voice', '<p>A second reply to the top comment.</p>', {
+          depth: 1,
+          score: 31,
+          likes: false,
+        }),
+        {
+          kind: 'more',
+          id: 'more1',
+          parentFullname: 't1_c2',
+          count: 7,
+          children: ['x1', 'x2'],
+          depth: 1,
+        },
+      ],
+    ),
+    comment(
+      'low_score',
+      '<p>Reddit already folded this one because of its score.</p>',
+      { collapsed: true, score: -9 },
+      [comment('hidden_reply', '<p>Hidden with its parent.</p>', { depth: 1 })],
+    ),
+    comment('last_word', '<p>A short last comment.</p>', { score: 3, scoreHidden: true }),
+  ];
+}
+
 const source: FeedSource = {
+  async loadThread() {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return sampleThread();
+  },
+  async loadMore(_post, more) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const depth = more.depth;
+    return [
+      comment('loaded_later', `<p>Loaded by "${more.id}".</p>`, { depth }),
+      comment('loaded_too', '<p>One more loaded reply.</p>', { depth }),
+    ];
+  },
   // A pretend vote: one sample post shows what a refused vote looks like.
   async vote(fullname) {
     await new Promise((resolve) => setTimeout(resolve, 400));

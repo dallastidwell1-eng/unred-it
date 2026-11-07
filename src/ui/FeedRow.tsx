@@ -2,27 +2,31 @@
 
 import { formatAge, formatCount } from '../lib/format';
 import type { Post } from '../lib/reddit-data';
+import { isPlainClick } from './clicks';
 import { CommentIcon, DownIcon, LinesIcon, LinkIcon, UpIcon } from './icons';
-
-/** A plain left click opens the layer; Ctrl/Cmd/Shift/middle clicks keep the browser's own behavior. */
-function isPlainClick(event: MouseEvent): boolean {
-  return event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
-}
 
 export function FeedRow({
   post,
   now,
   onOpen,
+  onOpenComments,
 }: {
   post: Post;
   now: number;
   onOpen: (post: Post, opener: HTMLElement) => void;
+  onOpenComments: (post: Post, opener: HTMLElement) => void;
 }) {
   const href = post.permalink;
   const open = (event: MouseEvent) => {
     if (isPlainClick(event)) {
       event.preventDefault();
       onOpen(post, event.currentTarget as HTMLElement);
+    }
+  };
+  const openComments = (event: MouseEvent) => {
+    if (isPlainClick(event)) {
+      event.preventDefault();
+      onOpenComments(post, event.currentTarget as HTMLElement);
     }
   };
   const vote = post.likes === true ? 'up' : post.likes === false ? 'down' : '';
@@ -64,7 +68,7 @@ export function FeedRow({
             <span class="sr-only">{voteLabel}</span>
           </span>
           <span class="dot-sep" aria-hidden="true" />
-          <a class="comments" href={href}>
+          <a class="comments" href={href} onClick={openComments}>
             <CommentIcon />
             {formatCount(post.numComments)}
             <span class="sr-only"> comments</span>

@@ -1,45 +1,55 @@
-// The rebuilt reader (M4). For now: top bar and the compact feed with
-// endless scrolling. Content layer, comments and picker come next.
+// The rebuilt reader (M4): top bar, the compact feed with endless scrolling,
+// and views stacked over it: an opened post (content layer) and comments.
+// The feed stays mounted underneath, so its place never changes (D-021).
 
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import type { FeedPage, Post } from '../lib/reddit-data';
-import type { VoteDirection } from '../lib/reddit-data';
+import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
+import type { FeedPage, Post, VoteDirection } from '../lib/reddit-data';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
+import { CommentsView } from './CommentsView';
 import { ContentLayer } from './ContentLayer';
 import { ChevronDownIcon } from './icons';
 import { FeedRow } from './FeedRow';
 
-/** Where the feed comes from: Reddit in the extension, a fixture in the preview. */
+/** Where the data comes from: Reddit in the extension, samples in the preview. */
 export interface FeedSource {
   /** "Home" or "r/name". */
   title: string;
   /** Reddit's own page for this feed (the escape hatch). */
   redditUrl: string;
   load(after: string | null): Promise<FeedPage>;
+  loadThread(post: Post, sort: CommentSort): Promise<ThreadItem[]>;
+  loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
   /** Sends a vote as the logged-in user. Missing where voting is not possible. */
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
 }
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
 
+/** One view over the feed. */
+interface Overlay {
+  kind: 'post' | 'comments';
+  fullname: string;
+}
+
 /**
- * Our marker in history.state while a post is open, so Back closes it.
+ * Our marker in history.state: the open views, so Back closes the top one.
  * `session` is new on every page load: history entries survive a reload, and
- * entries from an earlier load must not reopen a post.
+ * entries from an earlier load must not reopen anything.
  */
-interface LayerState {
-  unredLayer: string;
-  session: string;
+interface NavState {
+  unredSession: string;
+  overlays: Overlay[];
 }
 
 const SESSION = crypto.randomUUID();
 
-function isOurLayerState(value: unknown): value is LayerState {
+function isOurState(value: unknown): value is NavState {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
-  const state = value as Partial<LayerState>;
-  return typeof state.unredLayer === 'string' && state.session === SESSION;
+  const state = value as Partial<NavState>;
+  return state.unredSession === SESSION && Array.isArray(state.overlays);
 }
 
 export function App({ source, note }: { source: FeedSource; note?: string }) {
@@ -50,60 +60,48 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
   const busy = useRef(false);
   const sentinel = useRef<HTMLDivElement>(null);
   const [now] = useState(() => Date.now());
-  const [openPost, setOpenPost] = useState<Post | null>(null);
-  const opener = useRef<HTMLElement | null>(null);
-  const postsRef = useRef<Post[]>([]);
-  postsRef.current = posts;
+  const [overlays, setOverlays] = useState<Overlay[]>([]);
+  const overlaysRef = useRef<Overlay[]>([]);
+  overlaysRef.current = overlays;
+  /** The element that opened each view, to give focus back when it closes. */
+  const openers = useRef<(HTMLElement | null)[]>([]);
+  const previousDepth = useRef(0);
 
-  const open = useCallback((post: Post, from: HTMLElement) => {
-    opener.current = from;
-    setOpenPost(post);
-    // A history entry, so the browser's Back button closes the post (layout-spec 8).
-    window.history.pushState(
-      { unredLayer: post.fullname, session: SESSION } satisfies LayerState,
-      '',
-    );
+  const push = useCallback((overlay: Overlay, from: HTMLElement) => {
+    const next = [...overlaysRef.current, overlay];
+    openers.current[next.length - 1] = from;
+    setOverlays(next);
+    // A history entry, so the browser's Back button closes it (layout-spec 8).
+    window.history.pushState({ unredSession: SESSION, overlays: next } satisfies NavState, '');
   }, []);
 
-  const close = useCallback(() => {
-    if (isOurLayerState(window.history.state)) {
+  const openPost = useCallback(
+    (post: Post, from: HTMLElement) => {
+      push({ kind: 'post', fullname: post.fullname }, from);
+    },
+    [push],
+  );
+
+  const openComments = useCallback(
+    (post: Post, from: HTMLElement) => {
+      push({ kind: 'comments', fullname: post.fullname }, from);
+    },
+    [push],
+  );
+
+  const closeTop = useCallback(() => {
+    if (isOurState(window.history.state) && window.history.state.overlays.length > 0) {
       window.history.back(); // the popstate handler closes it
     } else {
-      setOpenPost(null);
+      setOverlays((list) => list.slice(0, -1));
     }
   }, []);
 
-  /** Shows the vote at once, sends it, and puts the post back if Reddit says no. */
-  const vote = useCallback(
-    async (post: Post, pressed: VoteButton) => {
-      if (!source.vote) {
-        return;
-      }
-      const updated = applyVote(post, directionFor(post.likes, pressed));
-      const show = (next: Post) => {
-        setPosts((list) => list.map((p) => (p.fullname === next.fullname ? next : p)));
-        setOpenPost((open) => (open?.fullname === next.fullname ? next : open));
-      };
-      show(updated);
-      try {
-        await source.vote(post.fullname, directionFor(post.likes, pressed));
-      } catch (error) {
-        show(post);
-        throw error;
-      }
-    },
-    [source],
-  );
-
-  // Back and Forward open and close the layer.
+  // Back and Forward close and reopen views.
   useEffect(() => {
     const onPop = (event: PopStateEvent) => {
       const state: unknown = event.state;
-      setOpenPost(
-        isOurLayerState(state)
-          ? (postsRef.current.find((p) => p.fullname === state.unredLayer) ?? null)
-          : null,
-      );
+      setOverlays(isOurState(state) ? state.overlays : []);
     };
     window.addEventListener('popstate', onPop);
     return () => {
@@ -111,11 +109,15 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     };
   }, []);
 
-  // While a post is open the page under it does not scroll; on close, focus
-  // goes back to the post that opened it.
+  // While a view is open the page under it does not scroll. When one closes,
+  // focus goes back to whatever opened it.
   useEffect(() => {
-    if (!openPost) {
-      opener.current?.focus();
+    const depth = overlays.length;
+    if (depth < previousDepth.current) {
+      openers.current[depth]?.focus();
+    }
+    previousDepth.current = depth;
+    if (depth === 0) {
       return;
     }
     const root = document.documentElement;
@@ -124,7 +126,28 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     return () => {
       root.style.overflow = previous;
     };
-  }, [openPost]);
+  }, [overlays]);
+
+  /** Shows the vote at once, sends it, and puts the post back if Reddit says no. */
+  const vote = useCallback(
+    async (post: Post, pressed: VoteButton) => {
+      if (!source.vote) {
+        return;
+      }
+      const dir = directionFor(post.likes, pressed);
+      const show = (next: Post) => {
+        setPosts((list) => list.map((p) => (p.fullname === next.fullname ? next : p)));
+      };
+      show(applyVote(post, dir));
+      try {
+        await source.vote(post.fullname, dir);
+      } catch (cause) {
+        show(post);
+        throw cause;
+      }
+    },
+    [source],
+  );
 
   const loadMore = useCallback(async () => {
     if (busy.current) {
@@ -173,6 +196,10 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     };
   }, [status, loadMore]);
 
+  const postFor = (fullname: string) => posts.find((p) => p.fullname === fullname);
+  const voteFor = (post: Post) =>
+    source.vote ? (pressed: VoteButton) => vote(post, pressed) : undefined;
+
   return (
     <div class="app">
       <header class="topbar">
@@ -185,7 +212,13 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         <h1 class="sr-only">{source.title}</h1>
         <ul class="feed">
           {posts.map((post) => (
-            <FeedRow key={post.fullname} post={post} now={now} onOpen={open} />
+            <FeedRow
+              key={post.fullname}
+              post={post}
+              now={now}
+              onOpen={openPost}
+              onOpenComments={openComments}
+            />
           ))}
         </ul>
         <div ref={sentinel} aria-live="polite">
@@ -205,14 +238,41 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         <a href={source.redditUrl}>Open Reddit's own page</a>
         {note && <p>{note}</p>}
       </footer>
-      {openPost && (
-        <ContentLayer
-          post={openPost}
-          now={now}
-          onClose={close}
-          onVote={source.vote ? (pressed) => vote(openPost, pressed) : undefined}
-        />
-      )}
+      {overlays.map((overlay, index) => {
+        const post = postFor(overlay.fullname);
+        if (!post) {
+          return null;
+        }
+        const active = index === overlays.length - 1;
+        const key = `${overlay.kind}-${overlay.fullname}-${String(index)}`;
+        if (overlay.kind === 'post') {
+          return (
+            <ContentLayer
+              key={key}
+              post={post}
+              now={now}
+              active={active}
+              onClose={closeTop}
+              onVote={voteFor(post)}
+              onOpenComments={(from) => {
+                openComments(post, from);
+              }}
+            />
+          );
+        }
+        return (
+          <CommentsView
+            key={key}
+            post={post}
+            now={now}
+            active={active}
+            backLabel={overlays[index - 1]?.kind === 'post' ? 'Post' : 'Feed'}
+            source={source}
+            onClose={closeTop}
+            onVotePost={voteFor(post)}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -1,18 +1,20 @@
 // The content layer (layout-spec 5.4): an opened post over the live feed.
 // The feed stays mounted underneath, so its place never changes (D-021).
-// Voting, saving and sharing come in M5; comments view later in M4.
+// Voting is here (D-057); saving and sharing come in M5.
 
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { formatAge, formatCount } from '../lib/format';
 import type { Post } from '../lib/reddit-data';
 import type { VoteButton } from '../lib/vote';
+import { isPlainClick } from './clicks';
 import { BackIcon, CommentIcon, DownIcon, UpIcon } from './icons';
 import { PostMedia } from './PostMedia';
+import { useDialogKeys } from './useDialogKeys';
 
 const REDDIT = 'https://old.reddit.com';
 
 /** Upvote, score, downvote (layout-spec 5.4; colors: color-spec rules 4 and 5). */
-function VoteBar({
+export function VoteBar({
   post,
   onVote,
 }: {
@@ -83,11 +85,16 @@ export function ContentLayer({
   now,
   onClose,
   onVote,
+  active = true,
+  onOpenComments,
 }: {
   post: Post;
   now: number;
   onClose: () => void;
   onVote?: (pressed: VoteButton) => Promise<void>;
+  /** Only the dialog on top answers Esc and keeps Tab inside. */
+  active?: boolean;
+  onOpenComments?: (opener: HTMLElement) => void;
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
@@ -96,42 +103,7 @@ export function ContentLayer({
     panel.current?.focus();
   }, [post.fullname]);
 
-  // Esc closes; Tab stays inside the dialog.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const element = panel.current;
-      if (!element) {
-        return;
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if (event.key !== 'Tab') {
-        return;
-      }
-      const focusable = Array.from(
-        element.querySelectorAll<HTMLElement>('a[href], button, [tabindex="0"]'),
-      );
-      const first = focusable[0];
-      const last = focusable.at(-1);
-      const active = (element.getRootNode() as Document | ShadowRoot).activeElement;
-      if (!first || !last) {
-        event.preventDefault();
-      } else if (event.shiftKey && (active === first || active === element)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
+  useDialogKeys(panel, active, onClose);
 
   return (
     <div class="layer-root">
@@ -168,7 +140,16 @@ export function ContentLayer({
           </article>
           <div class="action-bar">
             <VoteBar post={post} onVote={onVote} />
-            <a class="action-link" href={`${REDDIT}${post.permalink}`}>
+            <a
+              class="action-link"
+              href={`${REDDIT}${post.permalink}`}
+              onClick={(event) => {
+                if (onOpenComments && isPlainClick(event)) {
+                  event.preventDefault();
+                  onOpenComments(event.currentTarget);
+                }
+              }}
+            >
               <CommentIcon size={18} />
               {formatCount(post.numComments)}
               <span class="sr-only"> comments</span>

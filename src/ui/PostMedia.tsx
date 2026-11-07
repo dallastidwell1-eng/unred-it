@@ -10,7 +10,7 @@ import { BackIcon, ExternalIcon } from './icons';
 const REDDIT = 'https://old.reddit.com';
 
 /** Reddit's HTML, cleaned (D-052) and added as real nodes. */
-export function PostText({ html }: { html: string }) {
+export function PostText({ html, className = 'post-text' }: { html: string; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = box.current;
@@ -23,7 +23,7 @@ export function PostText({ html }: { html: string }) {
       spoiler.setAttribute('tabindex', '0');
     });
   }, [html]);
-  return <div class="post-text" ref={box} />;
+  return <div class={className} ref={box} />;
 }
 
 /** A Reddit video (D-054): HLS with sound through hls.js, else the silent MP4. */

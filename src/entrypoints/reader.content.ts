@@ -5,6 +5,7 @@ import { defineContentScript } from 'wxt/utils/define-content-script';
 import { feedJsonPath, feedTitle, isFeedPath, readerTurnedOff } from '../lib/feed-route';
 import { createRedditClient } from '../lib/reddit-client';
 import { parseFeedPage } from '../lib/reddit-data';
+import { loadMoreItems, loadThread } from '../lib/thread-loader';
 import type { FeedSource } from '../ui/App';
 import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
@@ -25,6 +26,18 @@ html.${READER_ON_CLASS} body > :not(${READER_TAG}) { display: none !important; }
 `;
 }
 
+/** GET a Reddit .json address as the logged-in user. */
+async function fetchJson(path: string): Promise<unknown> {
+  const response = await fetch(path, {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) {
+    throw new Error(`Reddit answered HTTP ${String(response.status)}`);
+  }
+  return response.json();
+}
+
 function redditSource(): FeedSource {
   const { pathname, search } = window.location;
   const off = new URLSearchParams(search);
@@ -35,15 +48,10 @@ function redditSource(): FeedSource {
     title: feedTitle(pathname),
     redditUrl: `${pathname}?${off.toString()}`,
     async load(after) {
-      const response = await fetch(feedJsonPath(pathname, search, after), {
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      });
-      if (!response.ok) {
-        throw new Error(`Reddit answered HTTP ${String(response.status)}`);
-      }
-      return parseFeedPage(await response.json());
+      return parseFeedPage(await fetchJson(feedJsonPath(pathname, search, after)));
     },
+    loadThread: (post, sort) => loadThread(fetchJson, post, sort),
+    loadMore: (post, more, sort) => loadMoreItems(fetchJson, post, more, sort),
   };
 }
 

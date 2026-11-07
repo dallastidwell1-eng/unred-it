@@ -17,7 +17,7 @@ function value(likes: boolean | null): number {
 }
 
 /** The post as it looks after the vote: new arrow state and score moved to match. */
-export function applyVote(post: Post, dir: VoteDirection): Post {
+export function applyVote<T extends Pick<Post, 'likes' | 'score'>>(item: T, dir: VoteDirection): T {
   const likes = dir === 1 ? true : dir === -1 ? false : null;
-  return { ...post, likes, score: post.score - value(post.likes) + value(likes) };
+  return { ...item, likes, score: item.score - value(item.likes) + value(likes) };
 }
