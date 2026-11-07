@@ -247,3 +247,18 @@ Source: session 002, spike evidence in OQ-011 and the session log.
 Date: 2026-11-06 · Decider: owner (approved creation and push, D-009; chose the fresh history)
 Decision: The public repository is https://github.com/dallastidwell1-eng/unred-it (default branch master). It starts from a fresh, single-commit history so that earlier local commits (one held the owner's Reddit username) are not published. references/ (the owner's third-party reference screenshots) stays on the PC only and is git-ignored. The old local history is kept in the local branch `backup/pre-public-2026-11-06`, which is never pushed. CI (.github/workflows/ci.yml) runs `npm run check` on every push to master and on pull requests, with actions pinned to commit SHAs. Text files use LF line endings (.gitattributes).
 Source: session 002, owner: "Fresh history" and "Approve: unred-it".
+
+### D-049: Signing runs on the owner's machine with the owner's keys
+Date: 2026-11-06 · Decider: Claude (follows D-007 and D-009; the owner can overrule)
+Decision: `npm run sign:unlisted` (M2 phone builds) and `npm run sign:listed` (M8) run scripts/sign.mjs, which the owner starts in his own terminal after setting WEB_EXT_API_KEY and WEB_EXT_API_SECRET for that window only (docs/releasing.md). The script refuses to run without both keys, runs `npm run check`, makes the extension zip and the reviewer sources zip, and calls `web-ext sign` with `--upload-source-code`. It never prints the keys. Every signed build gets a new, higher version number. Both channels use the one add-on ID of D-045 (to confirm, OQ-002).
+Source: session 002, M2 preparation; the owner chose "Prep M2, then M4".
+
+### D-050: UI library: Preact
+Date: 2026-11-06 · Decider: owner (D-009 approval, on Claude's recommendation)
+Decision: The rebuilt screens (M4 to M7) are Preact 11 components written in TypeScript (TSX). It is the only runtime library; it compiles with Vite's built-in JSX support and needs no extra build plugin.
+Source: session 002, owner chose "Preact".
+
+### D-051: Fonts bundled: Inter and Inter Tight
+Date: 2026-11-06 · Decider: owner (D-009 approval, on Claude's recommendation)
+Decision: The extension carries its own Inter (interface) and Inter Tight (wordmark) variable fonts from @fontsource-variable/inter and @fontsource-variable/inter-tight (SIL OFL 1.1). No font is fetched from the web. System fonts are the fallback.
+Source: session 002, owner chose "Bundle Inter".

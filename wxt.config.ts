@@ -7,6 +7,18 @@ export default defineConfig({
   // Explicit imports only: every file says where its names come from.
   imports: false,
   manifestVersion: 3,
+  // The sources zip is for AMO reviewers (OQ-001): only what builds the extension.
+  zip: {
+    excludeSources: [
+      'handoff/**',
+      'design/**',
+      'references/**',
+      'scripts/sign.mjs',
+      '.claude/**',
+      '.github/**',
+      'CLAUDE.md',
+    ],
+  },
   manifest: {
     name: 'Unred It',
     description: 'A clean, single-column reader for old.reddit.com, in your own logged-in browser.',

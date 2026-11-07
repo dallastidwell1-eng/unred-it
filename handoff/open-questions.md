@@ -7,12 +7,12 @@ Status: example · Owner: who answers · Opened: date, session NNN
 Answer: when closed, the answer, its source and the date.
 
 ### OQ-001: What exactly does AMO require for the source code of a bundled (TypeScript/WXT) extension?
-Status: open · Owner: Claude to research, before the first AMO upload · Opened: 2026-11-06, session 001
-Answer:
+Status: closed · Owner: Claude to research, before the first AMO upload · Opened: 2026-11-06, session 001
+Answer: Source is required because the build is bundled, transpiled and minified (extensionworkshop.com/documentation/publish/source-code-submission/, updated 2019-06-10). The package needs a README with build steps, tool versions and OS needs, and the lockfile; tools must be open source and run locally. AMO's default reviewer setup is Node 24.14.0 / npm 11.9.0. `web-ext sign --upload-source-code` sends the archive. Done in session 002 (2026-11-06): `wxt zip` makes the sources zip (handoff/, design/, references/, .claude/, .github/, CLAUDE.md and the sign script excluded in wxt.config.ts); README has the reviewer steps; a clean `npm ci` + `npm run build` from the extracted zip gave an identical .output/firefox-mv3 (`diff -r`). Not stated by the docs: whether unlisted versions also need source (the sign script always sends it). See D-049.
 
 ### OQ-002: Can one AMO add-on ID hold both unlisted test versions and listed public versions, or do test builds need a separate "beta" add-on ID?
-Status: open · Owner: Claude to research, before milestone M2 · Opened: 2026-11-06, session 001
-Answer:
+Status: open · Owner: owner, confirm on the first upload in M2 · Opened: 2026-11-06, session 001
+Answer: Partly answered (session 002, 2026-11-06): the Extension Workshop pages (signing overview, self-distribution, pre-release, updating, submitting, web-ext reference) do not say. They do say AMO has no pre-release channel, and Android can install an unlisted signed .xpi via Settings > About Firefox (tap logo 5 times) > Install Extension from File. Working plan, from Claude's knowledge of the AMO Developer Hub, not from the docs: one add-on ID holds both unlisted and listed versions, and every version number must be new and higher across both channels. Confirm when the first unlisted build is signed (M2).
 
 ### OQ-003: Which browser will the owner's wife use on her PC? Firefox is covered; Chrome or Edge needs a Chrome build and a Chrome Web Store account ($5 one-time fee).
 Status: open · Owner: owner · Opened: 2026-11-06, session 001

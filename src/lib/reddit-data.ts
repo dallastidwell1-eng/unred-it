@@ -14,6 +14,21 @@ export interface Post {
   url: string;
   /** true = upvoted by the user, false = downvoted, null = no vote. */
   likes: boolean | null;
+  /** Seconds since 1970 (UTC). */
+  createdUtc: number;
+  isSelf: boolean;
+  /** For example "i.redd.it" or "self.AskHistorians". */
+  domain: string;
+  over18: boolean;
+  stickied: boolean;
+  /** A real https thumbnail image, or null (text, NSFW, spoiler, default). */
+  thumbnailUrl: string | null;
+}
+
+/** One page of a feed and the cursor for the next page (null at the end). */
+export interface FeedPage {
+  posts: Post[];
+  after: string | null;
 }
 
 export interface Comment {
@@ -76,7 +91,26 @@ function toPost(data: Record<string, unknown>): Post {
     permalink: str(data, 'permalink'),
     url: str(data, 'url'),
     likes: typeof likes === 'boolean' ? likes : null,
+    createdUtc: num(data, 'created_utc'),
+    isSelf: data.is_self === true,
+    domain: str(data, 'domain'),
+    over18: data.over_18 === true,
+    stickied: data.stickied === true,
+    thumbnailUrl: thumbnailFrom(str(data, 'thumbnail')),
   };
+}
+
+/** Reddit puts words like "self", "nsfw" or "default" in `thumbnail` when there is no image. */
+function thumbnailFrom(value: string): string | null {
+  return value.startsWith('https://') ? value : null;
+}
+
+/** A feed page with its "after" cursor. */
+export function parseFeedPage(json: unknown): FeedPage {
+  const posts = parseListing(json);
+  const data = isRecord(json) && isRecord(json.data) ? json.data : {};
+  const after = typeof data.after === 'string' && data.after ? data.after : null;
+  return { posts, after };
 }
 
 /** Posts from a feed page, for example `/.json` or `/r/firefox/.json`. */

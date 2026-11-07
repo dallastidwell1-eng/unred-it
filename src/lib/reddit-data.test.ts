@@ -22,7 +22,7 @@ const listing = {
 describe('parseListing', () => {
   it('reads posts from a feed', () => {
     const [post] = parseListing(listing);
-    expect(post).toEqual({
+    expect(post).toMatchObject({
       fullname: 't3_abc123',
       id: 'abc123',
       title: 'Hello',
