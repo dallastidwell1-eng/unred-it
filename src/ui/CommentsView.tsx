@@ -14,6 +14,7 @@ import {
 } from '../lib/comments';
 import { formatAge, formatCount } from '../lib/format';
 import type { Post, VoteDirection } from '../lib/reddit-data';
+import type { CommentFocus } from '../lib/thread-loader';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { VoteBar } from './ContentLayer';
 import { BackIcon, DownIcon, UpIcon } from './icons';
@@ -23,7 +24,7 @@ import { useDialogKeys } from './useDialogKeys';
 
 /** What the comments view needs from Reddit (or from the preview's samples). */
 export interface CommentsSource {
-  loadThread(post: Post, sort: CommentSort): Promise<ThreadItem[]>;
+  loadThread(post: Post, sort: CommentSort, focus?: CommentFocus): Promise<ThreadItem[]>;
   loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
 }
@@ -31,6 +32,8 @@ export interface CommentsSource {
 interface ThreadActions {
   now: number;
   canVote: boolean;
+  /** The comment a comment link pointed at, drawn highlighted. */
+  focusId?: string;
   vote(comment: CommentNode, pressed: VoteButton): Promise<void>;
   loadMore(more: MoreNode): Promise<void>;
 }
@@ -135,7 +138,10 @@ function CommentItem({ comment, actions }: { comment: CommentNode; actions: Thre
       </div>
       {!folded && (
         <div class="comment-content">
-          <PostText html={comment.bodyHtml} className="comment-text" />
+          <PostText
+            html={comment.bodyHtml}
+            className={comment.id === actions.focusId ? 'comment-text focused' : 'comment-text'}
+          />
           {actions.canVote && (
             <div class={`comment-actions vote-group ${vote}`}>
               <button
@@ -196,7 +202,10 @@ export function CommentsView({
   source,
   onClose,
   onVotePost,
+  focus,
 }: {
+  /** Opened from a comment link: show that comment's thread first (D-027). */
+  focus?: CommentFocus;
   post: Post;
   now: number;
   backLabel: string;
@@ -217,12 +226,16 @@ export function CommentsView({
     panel.current?.focus();
   }, []);
 
+  // A comment link shows that comment's thread until "View all comments".
+  const [showAll, setShowAll] = useState(false);
+  const focusing = Boolean(focus) && !showAll;
+
   useEffect(() => {
     let current = true;
     setItems(null);
     setError('');
     source
-      .loadThread(post, sort)
+      .loadThread(post, sort, focusing ? focus : undefined)
       .then((loaded) => {
         if (current) {
           setItems(loaded);
@@ -236,11 +249,12 @@ export function CommentsView({
     return () => {
       current = false;
     };
-  }, [post.fullname, sort, attempt, source]);
+  }, [post.fullname, sort, attempt, source, focusing, focus]);
 
   const actions: ThreadActions = {
     now,
     canVote: Boolean(source.vote),
+    focusId: focusing ? focus?.commentId : undefined,
     async vote(comment, pressed) {
       if (!source.vote) {
         return;
@@ -347,6 +361,20 @@ export function CommentsView({
             )}
             {items?.length === 0 && <p class="status">No comments yet.</p>}
           </div>
+          {focusing && (
+            <div class="focus-note">
+              <p>You are viewing one comment’s thread.</p>
+              <button
+                class="focus-all"
+                type="button"
+                onClick={() => {
+                  setShowAll(true);
+                }}
+              >
+                View all comments
+              </button>
+            </div>
+          )}
           {items && items.length > 0 && (
             <div class="comment-list">
               <Thread items={items} actions={actions} />

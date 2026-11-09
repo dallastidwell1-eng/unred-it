@@ -1474,6 +1474,41 @@ button {
   overflow-wrap: anywhere;
 }
 
+/* The comment a comment link pointed at (D-027): a soft blue tint. */
+.comment-text.focused {
+  margin-left: -8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+/* "You are viewing one comment's thread. View all comments" */
+.focus-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.focus-note p {
+  margin: 0;
+}
+
+.focus-all {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .comment-text p,
 .comment-text ul,
 .comment-text ol,

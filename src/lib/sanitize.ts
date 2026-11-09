@@ -3,6 +3,8 @@
 // (scripts never run there); we then rebuild only safe parts with
 // createElement. No innerHTML anywhere.
 
+import { toReaderUrl } from './reddit-links';
+
 /** Tags kept as they are (their allowed attributes are listed in ATTRIBUTES). */
 const KEEP = new Set([
   'p',
@@ -92,11 +94,6 @@ export function safeHref(href: string): string | null {
   }
 }
 
-function isRedditHost(href: string): boolean {
-  const { hostname } = new URL(href);
-  return hostname === 'reddit.com' || hostname.endsWith('.reddit.com');
-}
-
 function copyChildren(from: Node, to: Node, doc: Document): void {
   for (const child of Array.from(from.childNodes)) {
     const clean = cleanNode(child, doc);
@@ -143,12 +140,15 @@ function cleanNode(node: Node, doc: Document): Node | null {
     }
     if (name === 'href') {
       const href = safeHref(value);
-      if (href) {
+      // Links to Reddit pages (any host, and redd.it) open in the reader, in
+      // the same tab (D-027); everything else opens in a new tab.
+      const reader = href ? toReaderUrl(href) : null;
+      if (reader) {
+        clean.setAttribute('href', reader);
+      } else if (href) {
         clean.setAttribute('href', href);
-        if (!isRedditHost(href)) {
-          clean.setAttribute('target', '_blank');
-          clean.setAttribute('rel', 'noopener noreferrer nofollow');
-        }
+        clean.setAttribute('target', '_blank');
+        clean.setAttribute('rel', 'noopener noreferrer nofollow');
       }
     } else if (name === 'start') {
       if (/^\d{1,6}$/.test(value)) {

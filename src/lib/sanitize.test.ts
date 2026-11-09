@@ -52,6 +52,20 @@ describe('cleanRedditHtml', () => {
     expect(outside?.getAttribute('rel')).toBe('noopener noreferrer nofollow');
   });
 
+  it('sends links to any Reddit page to old.reddit.com in the same tab (D-027)', () => {
+    const box = clean(
+      '<a href="https://www.reddit.com/r/books/comments/abc/dune/">www</a>' +
+        '<a href="https://redd.it/abc">short</a>' +
+        '<a href="https://i.redd.it/pic.jpg">picture</a>',
+    );
+    const [www, short, picture] = Array.from(box.querySelectorAll('a'));
+    expect(www?.getAttribute('href')).toBe('https://old.reddit.com/r/books/comments/abc/dune/');
+    expect(www?.hasAttribute('target')).toBe(false);
+    expect(short?.getAttribute('href')).toBe('https://old.reddit.com/comments/abc/');
+    expect(picture?.getAttribute('href')).toBe('https://i.redd.it/pic.jpg');
+    expect(picture?.getAttribute('target')).toBe('_blank');
+  });
+
   it('keeps spoilers as our own class', () => {
     const box = clean('<p><span class="md-spoiler-text">secret</span></p>');
     expect(box.innerHTML).toBe('<p><span class="spoiler">secret</span></p>');

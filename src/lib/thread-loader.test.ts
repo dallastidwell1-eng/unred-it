@@ -15,6 +15,15 @@ describe('paths', () => {
     );
   });
 
+  it('adds parent comments for a comment link (?context=N)', () => {
+    expect(threadJsonPath('post', 'top', 'abc', 3)).toBe(
+      '/comments/post/_/abc/.json?raw_json=1&limit=200&sort=top&context=3',
+    );
+    expect(threadJsonPath('post', 'top', undefined, 3)).toBe(
+      '/comments/post/.json?raw_json=1&limit=200&sort=top',
+    );
+  });
+
   it('builds the morechildren address', () => {
     expect(moreChildrenPath('t3_post', ['a', 'b'], 'confidence')).toBe(
       '/api/morechildren.json?api_type=json&raw_json=1&link_id=t3_post&children=a%2Cb&sort=confidence',

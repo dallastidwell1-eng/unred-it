@@ -4,6 +4,7 @@
 import Hls from 'hls.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { GalleryItem, Post, VideoInfo } from '../lib/reddit-data';
+import { toReaderUrl } from '../lib/reddit-links';
 import { cleanRedditHtml, safeHref } from '../lib/sanitize';
 import { BackIcon, ExternalIcon } from './icons';
 
@@ -185,6 +186,8 @@ export function Gallery({ items }: { items: GalleryItem[] }) {
 
 function LinkCard({ post }: { post: Post }) {
   const href = safeHref(post.url);
+  // A link to another Reddit page opens it in the reader, same tab (D-027).
+  const reader = href ? toReaderUrl(href) : null;
   const image = post.previewImage;
   return (
     <div class="link-card">
@@ -201,7 +204,12 @@ function LinkCard({ post }: { post: Post }) {
       )}
       <div class="link-card-body">
         <p class="link-source">{post.domain}</p>
-        {href && (
+        {reader && (
+          <a class="open-button" href={reader}>
+            Open linked post
+          </a>
+        )}
+        {href && !reader && (
           <a class="open-button" href={href} target="_blank" rel="noopener noreferrer">
             {post.postHint === 'rich:video' ? 'Open video' : 'Open article'}
             <ExternalIcon />
@@ -213,7 +221,8 @@ function LinkCard({ post }: { post: Post }) {
 }
 
 export function PostMedia({ post }: { post: Post }) {
-  const redditUrl = `${REDDIT}${post.permalink}`;
+  // Reddit's own page (?unred=off), since the reader now opens post pages too.
+  const redditUrl = `${REDDIT}${post.permalink}?unred=off`;
   const body = post.selftextHtml ? <PostText html={post.selftextHtml} /> : null;
 
   if (post.gallery) {

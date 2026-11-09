@@ -1,6 +1,7 @@
-// The rebuilt reader (M4) on old.reddit.com feed pages and post searches
-// (D-058). Other pages, and any page opened with ?unred=off, keep Reddit's
-// own view for now.
+// The rebuilt reader (M4) on old.reddit.com feed pages, post searches
+// (D-058) and post or comment addresses (D-027). Other pages (profiles,
+// wikis, settings), and any page opened with ?unred=off, keep Reddit's own
+// view for now.
 
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import {
@@ -15,7 +16,8 @@ import { loadSearchPage } from '../lib/search-page';
 import { createRedditClient } from '../lib/reddit-client';
 import { parseFeedPage } from '../lib/reddit-data';
 import { loadSubscriptions } from '../lib/subreddits';
-import { loadMoreItems, loadThread } from '../lib/thread-loader';
+import { postRoute } from '../lib/reddit-links';
+import { loadMoreItems, loadPost, loadThread } from '../lib/thread-loader';
 import type { FeedSource } from '../ui/App';
 import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
@@ -65,22 +67,28 @@ function redditSource(): FeedSource {
   const off = new URLSearchParams(search);
   off.set('unred', 'off');
   const client = createRedditClient((url, init) => fetch(url, init));
+  // A post page shows its comments over the post's subreddit feed (D-027).
+  const direct = postRoute(pathname, search);
+  const feedPath = direct ? (direct.subreddit ? `/r/${direct.subreddit}/` : '/') : pathname;
+  const feedSearch = direct ? '' : search;
   return {
     vote: (fullname, dir) => client.vote(fullname, dir),
     loadAccount: () => client.account(),
     loadSubreddits: () => loadSubscriptions(fetchJson),
-    title: feedTitle(pathname),
-    path: pathname,
-    search: searchInfo(pathname, search),
+    title: feedTitle(feedPath),
+    path: feedPath,
+    search: searchInfo(feedPath, feedSearch),
     redditUrl: `${pathname}?${off.toString()}`,
+    direct,
+    loadPost: (postId) => loadPost(fetchJson, postId),
     async load(after) {
       // Reddit blocks /search.json; search pages are read from their HTML.
-      if (isSearchPath(pathname)) {
-        return loadSearchPage(fetchText, fetchJson, pathname, search, after);
+      if (isSearchPath(feedPath)) {
+        return loadSearchPage(fetchText, fetchJson, feedPath, feedSearch, after);
       }
-      return parseFeedPage(await fetchJson(feedJsonPath(pathname, search, after)));
+      return parseFeedPage(await fetchJson(feedJsonPath(feedPath, feedSearch, after)));
     },
-    loadThread: (post, sort) => loadThread(fetchJson, post, sort),
+    loadThread: (post, sort, focus) => loadThread(fetchJson, post, sort, focus),
     loadMore: (post, more, sort) => loadMoreItems(fetchJson, post, more, sort),
   };
 }
@@ -100,7 +108,10 @@ export default defineContentScript({
   runAt: 'document_start',
   main() {
     const { pathname, search, hash } = window.location;
-    const readerPage = isFeedPath(pathname) || searchInfo(pathname, search) !== null;
+    const readerPage =
+      isFeedPath(pathname) ||
+      searchInfo(pathname, search) !== null ||
+      postRoute(pathname, search) !== null;
     if (!readerPage || readerTurnedOff(search) || hash === SPIKE_HASH) {
       return;
     }

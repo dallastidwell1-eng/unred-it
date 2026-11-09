@@ -6,6 +6,7 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/inter-tight';
 import type { CommentNode, ThreadItem } from '../src/lib/comments';
 import { feedTitle, searchInfo } from '../src/lib/feed-route';
+import { postRoute } from '../src/lib/reddit-links';
 import type { Community, FeedPage, Post } from '../src/lib/reddit-data';
 import { sortSubreddits, type Subreddit } from '../src/lib/subreddits';
 import type { FeedSource } from '../src/ui/App';
@@ -18,8 +19,11 @@ const NOW_S = Date.now() / 1000;
 // ?account=none shows the logged-out bar, ?account=read one with no unread.
 const params = new URLSearchParams(window.location.search);
 const PAGE = new URL(params.get('feed') ?? '/', window.location.origin);
-const FEED = PAGE.pathname;
-const SEARCH = searchInfo(PAGE.pathname, PAGE.search);
+// A post address such as /r/books/comments/sample3/x/c2/ opens that sample
+// post's comments over r/books (D-027).
+const DIRECT = postRoute(PAGE.pathname, PAGE.search);
+const FEED = DIRECT ? (DIRECT.subreddit ? `/r/${DIRECT.subreddit}/` : '/') : PAGE.pathname;
+const SEARCH = DIRECT ? null : searchInfo(PAGE.pathname, PAGE.search);
 
 const SAMPLE_SUBS: Subreddit[] = sortSubreddits(
   [
@@ -284,10 +288,38 @@ function sampleThread(): ThreadItem[] {
   ];
 }
 
+/** The comment with this id and its replies, searched through the sample thread. */
+function findComment(items: ThreadItem[], id: string): CommentNode | null {
+  for (const item of items) {
+    if (item.kind !== 'comment') {
+      continue;
+    }
+    if (item.id === id) {
+      return item;
+    }
+    const inside = findComment(item.replies, id);
+    if (inside) {
+      return inside;
+    }
+  }
+  return null;
+}
+
 const source: FeedSource = {
-  async loadThread() {
+  async loadThread(_post, _sort, focus) {
     await new Promise((resolve) => setTimeout(resolve, 300));
-    return sampleThread();
+    const thread = sampleThread();
+    const found = focus ? findComment(thread, focus.commentId) : null;
+    return found ? [{ ...found, depth: 0 }] : thread;
+  },
+  direct: DIRECT,
+  async loadPost(postId) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const found = [...PAGE_1, ...PAGE_2].find((p) => p.id === postId);
+    if (!found) {
+      throw new Error('HTTP 404 (sample)');
+    }
+    return found;
   },
   async loadMore(_post, more) {
     await new Promise((resolve) => setTimeout(resolve, 300));

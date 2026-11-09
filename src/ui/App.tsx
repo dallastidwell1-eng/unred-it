@@ -7,7 +7,9 @@ import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
 import { searchPath, type SearchInfo } from '../lib/feed-route';
 import type { Account } from '../lib/reddit-client';
 import type { Community, FeedPage, Post, VoteDirection } from '../lib/reddit-data';
+import type { PostRoute } from '../lib/reddit-links';
 import { currentFeed, type Subreddit } from '../lib/subreddits';
+import type { CommentFocus } from '../lib/thread-loader';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { isPlainClick } from './clicks';
 import { CommentsView } from './CommentsView';
@@ -27,7 +29,7 @@ export interface FeedSource {
   /** Reddit's own page for this feed (the escape hatch). */
   redditUrl: string;
   load(after: string | null): Promise<FeedPage>;
-  loadThread(post: Post, sort: CommentSort): Promise<ThreadItem[]>;
+  loadThread(post: Post, sort: CommentSort, focus?: CommentFocus): Promise<ThreadItem[]>;
   loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
   /** Sends a vote as the logged-in user. Missing where voting is not possible. */
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
@@ -39,6 +41,13 @@ export interface FeedSource {
   search?: SearchInfo | null;
   /** The logged-in user for the account button; null when logged out. */
   loadAccount?: () => Promise<Account | null>;
+  /**
+   * A post or comment address opened directly (D-027): its comments open
+   * over this source's feed (the post's subreddit), and Back shows that feed.
+   */
+  direct?: PostRoute | null;
+  /** One post by its ID, for `direct`. */
+  loadPost?: (postId: string) => Promise<Post>;
 }
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
@@ -47,6 +56,8 @@ type Status = 'loading' | 'idle' | 'error' | 'end';
 interface Overlay {
   kind: 'post' | 'comments' | 'picker';
   fullname: string;
+  /** Comments opened from a comment link: that comment's thread. */
+  focus?: CommentFocus;
 }
 
 /**
@@ -117,6 +128,47 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
   }, []);
 
   const pickerOpen = overlays.at(-1)?.kind === 'picker';
+
+  /** Posts that are not in the feed: one opened from its own address. */
+  const [extraPosts, setExtraPosts] = useState<Post[]>([]);
+  const [directError, setDirectError] = useState('');
+
+  // A post or comment address opened directly (D-027). This history entry
+  // becomes the subreddit's feed, and the post's own address goes on top with
+  // its comments open; Back then shows the feed without a reload.
+  useEffect(() => {
+    const route = source.direct;
+    const loadPost = source.loadPost;
+    if (!route || !loadPost) {
+      return;
+    }
+    let live = true;
+    loadPost(route.postId)
+      .then((post) => {
+        if (!live) {
+          return;
+        }
+        setExtraPosts((list) => [...list, post]);
+        const overlay: Overlay = { kind: 'comments', fullname: post.fullname };
+        if (route.commentId) {
+          overlay.focus = { commentId: route.commentId, context: route.context };
+        }
+        const { pathname, search, hash } = window.location;
+        const base: NavState = { unredSession: SESSION, overlays: [] };
+        window.history.replaceState(base, '', source.path);
+        const top: NavState = { unredSession: SESSION, overlays: [overlay] };
+        window.history.pushState(top, '', `${pathname}${search}${hash}`);
+        setOverlays([overlay]);
+      })
+      .catch((cause: unknown) => {
+        if (live) {
+          setDirectError(cause instanceof Error ? cause.message : String(cause));
+        }
+      });
+    return () => {
+      live = false;
+    };
+  }, [source]);
 
   const togglePicker = useCallback(
     (event: MouseEvent) => {
@@ -249,7 +301,9 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
       }
       const dir = directionFor(post.likes, pressed);
       const show = (next: Post) => {
-        setPosts((list) => list.map((p) => (p.fullname === next.fullname ? next : p)));
+        const swap = (list: Post[]) => list.map((p) => (p.fullname === next.fullname ? next : p));
+        setPosts(swap);
+        setExtraPosts(swap);
       };
       show(applyVote(post, dir));
       try {
@@ -320,7 +374,8 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     [go],
   );
 
-  const postFor = (fullname: string) => posts.find((p) => p.fullname === fullname);
+  const postFor = (fullname: string) =>
+    posts.find((p) => p.fullname === fullname) ?? extraPosts.find((p) => p.fullname === fullname);
   const voteFor = (post: Post) =>
     source.vote ? (pressed: VoteButton) => vote(post, pressed) : undefined;
 
@@ -341,6 +396,12 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         />
         <main>
           <h1 class="sr-only">{source.title}</h1>
+          {directError && (
+            <div class="status" role="alert">
+              <p>Could not open the post: {directError}</p>
+              <a href={source.redditUrl}>Open Reddit's own page</a>
+            </div>
+          )}
           {source.search && (
             <div class="search-head">
               <p>
@@ -454,6 +515,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
               source={source}
               onClose={closeTop}
               onVotePost={voteFor(post)}
+              focus={overlay.focus}
             />
           );
         })}

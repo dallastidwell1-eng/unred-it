@@ -14,11 +14,35 @@ export type FetchJson = (path: string) => Promise<unknown>;
 /** Reddit answers at most this many ids per /api/morechildren call. */
 export const MORE_BATCH = 100;
 
-/** The thread page, or one comment's own branch when `commentId` is given. */
-export function threadJsonPath(postId: string, sort: CommentSort, commentId?: string): string {
+/** One comment's thread, as a comment link opens it (D-027). */
+export interface CommentFocus {
+  commentId: string;
+  /** Parent comments to show above it (Reddit's ?context=N). */
+  context: number;
+}
+
+/**
+ * The thread page, or one comment's own branch when `commentId` is given,
+ * with `context` parent comments above it.
+ */
+export function threadJsonPath(
+  postId: string,
+  sort: CommentSort,
+  commentId?: string,
+  context = 0,
+): string {
   const query = new URLSearchParams({ raw_json: '1', limit: '200', sort });
+  if (commentId && context > 0) {
+    query.set('context', String(context));
+  }
   const branch = commentId ? `_/${commentId}/` : '';
   return `/comments/${postId}/${branch}.json?${query.toString()}`;
+}
+
+/** One post by its ID, for a post address opened directly (D-027). */
+export async function loadPost(fetchJson: FetchJson, postId: string): Promise<Post> {
+  const query = new URLSearchParams({ raw_json: '1', limit: '1' });
+  return parseThreadPage(await fetchJson(`/comments/${postId}/.json?${query.toString()}`)).post;
 }
 
 export function moreChildrenPath(linkFullname: string, ids: string[], sort: CommentSort): string {
@@ -36,8 +60,10 @@ export async function loadThread(
   fetchJson: FetchJson,
   post: Post,
   sort: CommentSort,
+  focus?: CommentFocus,
 ): Promise<ThreadItem[]> {
-  return parseThreadPage(await fetchJson(threadJsonPath(post.id, sort))).comments;
+  const path = threadJsonPath(post.id, sort, focus?.commentId, focus?.context);
+  return parseThreadPage(await fetchJson(path)).comments;
 }
 
 /**
