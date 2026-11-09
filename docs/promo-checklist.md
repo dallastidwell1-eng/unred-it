@@ -66,4 +66,6 @@ that says "promoted", "sponsored" or "ad":
    show promoted posts there (unless an ad blocker hides them); the reader
    should show none.
 
-Result (session 004, 2026-11-09): see handoff/sessions/004_2026-11-09_m4-card-view.md.
+Result (session 004, 2026-11-09): the owner followed these steps in Firefox
+desktop and saw no ads in the reader. The phone check waits for M2's signed
+build.
