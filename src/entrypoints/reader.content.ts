@@ -24,7 +24,7 @@ import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
 import { themes } from '../ui/tokens';
 import { fitToScreenWidth } from '../ui/viewport';
-import { READER_ON_CLASS, SPIKE_HASH } from '../lib/constants';
+import { READER_ON_CLASS } from '../lib/constants';
 import { DEFAULT_VIEW, storageViewStore, type FeedView, type ViewStore } from '../lib/view-setting';
 
 /** Hides Reddit's page under the reader. Added before Reddit's page draws. */
@@ -112,12 +112,12 @@ export default defineContentScript({
   matches: ['https://old.reddit.com/*'],
   runAt: 'document_start',
   main() {
-    const { pathname, search, hash } = window.location;
+    const { pathname, search } = window.location;
     const readerPage =
       isFeedPath(pathname) ||
       searchInfo(pathname, search) !== null ||
       postRoute(pathname, search) !== null;
-    if (!readerPage || readerTurnedOff(search) || hash === SPIKE_HASH) {
+    if (!readerPage || readerTurnedOff(search)) {
       return;
     }
     const style = document.createElement('style');

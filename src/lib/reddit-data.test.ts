@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseListing, parseMe, parseThread, postIdFrom, voteBody } from './reddit-data';
+import { parseListing, parseMe, voteBody } from './reddit-data';
 
 const postData = {
   name: 't3_abc123',
@@ -49,50 +49,6 @@ describe('parseListing', () => {
   });
 });
 
-describe('parseThread', () => {
-  it('reads the post and flattens nested comments with depth', () => {
-    const comments = {
-      kind: 'Listing',
-      data: {
-        children: [
-          {
-            kind: 't1',
-            data: {
-              name: 't1_c1',
-              author: 'a',
-              body: 'top',
-              score: 5,
-              depth: 0,
-              replies: {
-                kind: 'Listing',
-                data: {
-                  children: [
-                    {
-                      kind: 't1',
-                      data: { name: 't1_c2', author: 'b', body: 'reply', score: 1, depth: 1 },
-                    },
-                    { kind: 'more', data: { count: 7 } },
-                  ],
-                },
-              },
-            },
-          },
-        ],
-      },
-    };
-    const thread = parseThread([listing, comments]);
-    expect(thread.post.title).toBe('Hello');
-    expect(thread.comments.map((c) => [c.fullname, c.depth])).toEqual([
-      ['t1_c1', 0],
-      ['t1_c2', 1],
-    ]);
-  });
-
-  it('rejects a non-thread', () => {
-    expect(() => parseThread(listing)).toThrow('Not a Reddit thread');
-  });
-});
-
 describe('parseMe', () => {
   it('reads the logged-in user', () => {
     expect(parseMe({ kind: 't2', data: { name: 'me', modhash: 'xyz' } })).toEqual({
@@ -114,20 +70,6 @@ describe('parseMe', () => {
   it('returns null when logged out', () => {
     expect(parseMe({})).toBeNull();
     expect(parseMe({ data: { name: 'me', modhash: '' } })).toBeNull();
-  });
-});
-
-describe('postIdFrom', () => {
-  it('reads old, www and short-form post URLs', () => {
-    expect(postIdFrom('https://old.reddit.com/r/firefox/comments/AbC123/hello/')).toBe('abc123');
-    expect(postIdFrom('https://www.reddit.com/r/firefox/comments/abc123')).toBe('abc123');
-    expect(postIdFrom(' t3_abc123 ')).toBe('abc123');
-  });
-
-  it('rejects other sites and non-post pages', () => {
-    expect(postIdFrom('https://evil.example/r/x/comments/abc123/')).toBeNull();
-    expect(postIdFrom('https://old.reddit.com/r/firefox/')).toBeNull();
-    expect(postIdFrom('hello')).toBeNull();
   });
 });
 
