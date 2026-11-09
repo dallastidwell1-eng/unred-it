@@ -23,6 +23,7 @@ import type { FeedSource } from '../ui/App';
 import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
 import { themes } from '../ui/tokens';
+import { fitToScreenWidth } from '../ui/viewport';
 import { READER_ON_CLASS, SPIKE_HASH } from '../lib/constants';
 import { DEFAULT_VIEW, storageViewStore, type FeedView, type ViewStore } from '../lib/view-setting';
 
@@ -123,6 +124,9 @@ export default defineContentScript({
     style.textContent = pageCss();
     document.documentElement.append(style);
     document.documentElement.classList.add(READER_ON_CLASS);
+    // Phones: lay the page out at the screen's width, not as a shrunken
+    // desktop page. Again once the head exists, in case Reddit adds its own.
+    fitToScreenWidth(document);
 
     // The fonts are local files, so waiting for them is short and avoids a
     // visible font swap.
@@ -133,6 +137,7 @@ export default defineContentScript({
     const viewStore = storageViewStore(browser.storage.sync);
     const viewLoaded = viewStore.load().catch(() => DEFAULT_VIEW);
     whenBodyReady(() => {
+      fitToScreenWidth(document);
       void Promise.all([viewLoaded, fontsLoaded]).then(([view]) => {
         mountReader(document.body, redditSource(view, viewStore));
       });
