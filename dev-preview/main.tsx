@@ -1,5 +1,6 @@
 // Developer preview of the reader with sample data, outside Firefox and Reddit.
-// Run: npx vite serve dev-preview. Add ?theme=dark or ?theme=light to force a theme.
+// Run: npx vite serve dev-preview. ?theme=dark|light|device and ?view=card|compact
+// set those settings; ?page=options shows the extension's options page.
 // Not part of the extension build.
 
 import '@fontsource-variable/inter';
@@ -9,9 +10,17 @@ import { feedTitle, searchInfo } from '../src/lib/feed-route';
 import { postRoute } from '../src/lib/reddit-links';
 import type { Community, FeedPage, Post } from '../src/lib/reddit-data';
 import { sortSubreddits, type Subreddit } from '../src/lib/subreddits';
-import { parseView, VIEW_KEY, type ViewStore } from '../src/lib/view-setting';
+import { storageOpenedStore } from '../src/lib/opened-posts';
+import {
+  parseTheme,
+  storageSettingsStore,
+  type Settings,
+  type StorageAreaLike,
+} from '../src/lib/settings';
+import { parseView } from '../src/lib/view-setting';
 import type { FeedSource } from '../src/ui/App';
 import { mountReader } from '../src/ui/mount';
+import { mountOptions } from '../src/ui/OptionsPage';
 
 const NOW_S = Date.now() / 1000;
 
@@ -402,35 +411,67 @@ const source: FeedSource = {
   },
 };
 
-// The view setting (D-061) in this page's localStorage, standing in for
-// Firefox Sync storage. ?view=card or ?view=compact sets it on load.
-const previewViews: ViewStore = {
-  load: () => Promise.resolve(parseView(localStorage.getItem(VIEW_KEY))),
-  save(view) {
-    localStorage.setItem(VIEW_KEY, view);
+// The settings (M6) in this page's localStorage, standing in for Firefox Sync
+// storage (browser.storage.sync) through the real stores. A change shows in
+// this tab and in other preview tabs. ?view=card|compact and
+// ?theme=dark|light|device set those settings on load.
+type Changes = Record<string, { newValue?: unknown }>;
+const PREFIX = 'unred:';
+const listeners = new Set<(changes: Changes) => void>();
+const previewArea: StorageAreaLike = {
+  get(keys) {
+    const found: Record<string, unknown> = {};
+    for (const key of Array.isArray(keys) ? keys : [keys]) {
+      const raw = localStorage.getItem(PREFIX + key);
+      if (raw !== null) {
+        found[key] = JSON.parse(raw) as unknown;
+      }
+    }
+    return Promise.resolve(found);
+  },
+  set(items) {
+    const changes: Changes = {};
+    for (const [key, value] of Object.entries(items)) {
+      localStorage.setItem(PREFIX + key, JSON.stringify(value));
+      changes[key] = { newValue: value };
+    }
+    listeners.forEach((listener) => {
+      listener(changes);
+    });
     return Promise.resolve();
   },
-  watch(onChange) {
-    const listener = (event: StorageEvent) => {
-      if (event.key === VIEW_KEY) {
-        onChange(parseView(event.newValue));
-      }
-    };
-    window.addEventListener('storage', listener);
-    return () => {
-      window.removeEventListener('storage', listener);
-    };
+  onChanged: {
+    addListener: (listener) => listeners.add(listener),
+    removeListener: (listener) => listeners.delete(listener),
   },
 };
-const askedView = params.get('view');
-if (askedView) {
-  localStorage.setItem(VIEW_KEY, parseView(askedView));
-}
-source.view = await previewViews.load();
-source.viewStore = previewViews;
+window.addEventListener('storage', (event) => {
+  if (event.key?.startsWith(PREFIX)) {
+    const value = event.newValue === null ? undefined : (JSON.parse(event.newValue) as unknown);
+    listeners.forEach((listener) => {
+      listener({ [event.key?.slice(PREFIX.length) ?? '']: { newValue: value } });
+    });
+  }
+});
 
-const theme = params.get('theme');
-const host = mountReader(document.body, source, 'Preview with sample data', 'open');
-if (theme === 'dark' || theme === 'light') {
-  host.dataset.theme = theme;
+const settingsStore = storageSettingsStore(previewArea);
+const asked: Partial<Settings> = {};
+if (params.get('view')) {
+  asked.view = parseView(params.get('view'));
+}
+if (params.get('theme')) {
+  asked.theme = parseTheme(params.get('theme'));
+}
+await settingsStore.save(asked);
+
+if (params.get('page') === 'options') {
+  // The extension's options page (D-064), as Firefox's add-on settings open it.
+  mountOptions(document.body, await settingsStore.load(), settingsStore, { version: '0.0.0' });
+} else {
+  source.settings = await settingsStore.load();
+  source.settingsStore = settingsStore;
+  source.openedStore = storageOpenedStore(previewArea);
+  source.opened = await source.openedStore.load();
+  source.version = '0.0.0 (preview)';
+  mountReader(document.body, source, 'Preview with sample data', 'open');
 }

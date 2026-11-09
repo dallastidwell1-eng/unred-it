@@ -9,9 +9,13 @@ import { searchPath, type SearchInfo } from '../lib/feed-route';
 import type { Account } from '../lib/reddit-client';
 import type { Community, FeedPage, Post, VoteDirection } from '../lib/reddit-data';
 import type { PostRoute } from '../lib/reddit-links';
+import { PAGE_THEME } from '../lib/constants';
+import { feedPlace, postFilter } from '../lib/filters';
+import type { OpenedStore } from '../lib/opened-posts';
+import { DEFAULT_SETTINGS, type Settings, type SettingsStore } from '../lib/settings';
 import { currentFeed, type Subreddit } from '../lib/subreddits';
 import type { CommentFocus } from '../lib/thread-loader';
-import { DEFAULT_VIEW, otherView, type FeedView, type ViewStore } from '../lib/view-setting';
+import type { FeedView } from '../lib/view-setting';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { isPlainClick } from './clicks';
 import { FeedCard } from './FeedCard';
@@ -19,6 +23,7 @@ import { FeedPicker } from './FeedPicker';
 import { FeedRow } from './FeedRow';
 import { PostPage, type PostPageStart } from './PostPage';
 import { SearchCommunities } from './SearchCommunities';
+import { SettingsView } from './SettingsPage';
 import { OpenPageContext, SubredditLink } from './SubredditLink';
 import { TopBar } from './TopBar';
 
@@ -54,10 +59,16 @@ export interface FeedSource {
   direct?: PostRoute | null;
   /** One post by its ID, for `direct`. */
   loadPost?: (postId: string) => Promise<Post>;
-  /** The saved feed view, read before the reader is drawn (D-061). Default compact. */
-  view?: FeedView;
-  /** Saves and watches the feed view. Missing: the view button is not shown. */
-  viewStore?: ViewStore;
+  /** The saved settings, read before the reader is drawn (M6). Default: DEFAULT_SETTINGS. */
+  settings?: Settings;
+  /** Saves and watches the settings. Missing: no Settings button. */
+  settingsStore?: SettingsStore;
+  /** Post IDs the user opened before this page loaded, newest first (D-065). */
+  opened?: string[];
+  /** Keeps the posts the user opens. Missing: nothing is kept. */
+  openedStore?: OpenedStore;
+  /** The extension's version, shown in Settings. */
+  version?: string;
 }
 
 /** The post at the top of the screen and how far it is from the top (px). */
@@ -68,9 +79,9 @@ interface ScrollAnchor {
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
 
-/** One view over the feed. The picker has no post, so its fullname is empty. */
+/** One view over the feed. The picker and Settings have no post, so their fullname is empty. */
 interface Overlay {
-  kind: 'post' | 'picker';
+  kind: 'post' | 'picker' | 'settings';
   fullname: string;
   /** Opened from a comment count: start at the comments (D-062). */
   start?: PostPageStart;
@@ -123,18 +134,28 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     window.history.pushState({ unredSession: SESSION, overlays: next } satisfies NavState, '');
   }, []);
 
+  /** Keeps the post as opened, for "Hide posts I have opened" (D-065). */
+  const rememberOpened = useCallback(
+    (post: Post) => {
+      source.openedStore?.add(post.id).catch(() => undefined);
+    },
+    [source],
+  );
+
   const openPost = useCallback(
     (post: Post, from: HTMLElement) => {
+      rememberOpened(post);
       push({ kind: 'post', fullname: post.fullname }, from);
     },
-    [push],
+    [push, rememberOpened],
   );
 
   const openComments = useCallback(
     (post: Post, from: HTMLElement) => {
+      rememberOpened(post);
       push({ kind: 'post', fullname: post.fullname, start: 'comments' }, from);
     },
-    [push],
+    [push, rememberOpened],
   );
 
   const closeTop = useCallback(() => {
@@ -168,6 +189,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
           return;
         }
         setExtraPosts((list) => [...list, post]);
+        rememberOpened(post);
         const overlay: Overlay = { kind: 'post', fullname: post.fullname };
         if (route.commentId) {
           overlay.focus = { commentId: route.commentId, context: route.context };
@@ -187,7 +209,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     return () => {
       live = false;
     };
-  }, [source]);
+  }, [source, rememberOpened]);
 
   const togglePicker = useCallback(
     (event: MouseEvent) => {
@@ -198,6 +220,15 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
       }
     },
     [push, closeTop],
+  );
+
+  const openSettings = useCallback(
+    (event: MouseEvent) => {
+      if (overlaysRef.current.length === 0) {
+        push({ kind: 'settings', fullname: '' }, event.currentTarget as HTMLElement);
+      }
+    },
+    [push],
   );
 
   /** Loads another reader page; `replace` puts it in place of this history entry. */
@@ -404,9 +435,10 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     };
   }, [status, loadMore]);
 
-  // The feed view (D-061). A change in another tab or on another device
-  // (Firefox Sync, D-028) shows here too.
-  const [view, setView] = useState<FeedView>(source.view ?? DEFAULT_VIEW);
+  // The settings (M6). A change in Settings, in another tab or on another
+  // device (Firefox Sync, D-028) shows here at once.
+  const [settings, setSettings] = useState<Settings>(source.settings ?? DEFAULT_SETTINGS);
+  const view = settings.view;
   const feedList = useRef<HTMLUListElement>(null);
   const anchor = useRef<ScrollAnchor | null>(null);
 
@@ -430,19 +462,65 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     }
   }, []);
 
-  const viewRef = useRef(view);
+  const viewRef = useRef<FeedView>(view);
   viewRef.current = view;
-  const changeView = useCallback(
-    (next: FeedView) => {
-      if (next !== viewRef.current) {
+  /** Shows changed settings; a new view keeps the top post in place. */
+  const showSettings = useCallback(
+    (changes: Partial<Settings>) => {
+      if (changes.view && changes.view !== viewRef.current) {
         rememberTop();
-        setView(next);
       }
+      setSettings((current) => ({ ...current, ...changes }));
     },
     [rememberTop],
   );
 
-  useEffect(() => source.viewStore?.watch(changeView), [source, changeView]);
+  useEffect(() => source.settingsStore?.watch(showSettings), [source, showSettings]);
+
+  /** A change made in Settings: shown at once, then saved (and synced). */
+  const changeSettings = useCallback(
+    (changes: Partial<Settings>) => {
+      showSettings(changes);
+      // If saving fails, the change still holds on this page.
+      source.settingsStore?.save(changes).catch(() => undefined);
+    },
+    [source, showSettings],
+  );
+
+  // The theme (D-024): "device" follows the browser; light or dark override
+  // it, on the reader and on the page behind it.
+  // The page's own <html> gets a name of ours, apart from Reddit's attributes.
+  const appRoot = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const root = appRoot.current?.getRootNode();
+    const host = root instanceof ShadowRoot ? (root.host as HTMLElement) : null;
+    const page = document.documentElement;
+    if (settings.theme === 'device') {
+      host?.removeAttribute('data-theme');
+      page.removeAttribute(PAGE_THEME);
+    } else {
+      host?.setAttribute('data-theme', settings.theme);
+      page.setAttribute(PAGE_THEME, settings.theme);
+    }
+  }, [settings.theme]);
+
+  // The filters (D-065). Posts opened on this page stay where they are until
+  // the feed loads again, so the list does not jump.
+  const [openedBefore] = useState(() => new Set(source.opened ?? []));
+  const keep = useMemo(
+    () =>
+      postFilter(
+        {
+          hiddenSubreddits: settings.hiddenSubreddits,
+          hiddenWords: settings.hiddenWords,
+          hideOpened: settings.hideOpened,
+          opened: openedBefore,
+        },
+        feedPlace(source.path, source.search ?? null),
+      ),
+    [settings, openedBefore, source],
+  );
+  const shownPosts = useMemo(() => posts.filter(keep), [posts, keep]);
 
   // After a switch, scroll so the same post is where it was.
   useLayoutEffect(() => {
@@ -460,13 +538,6 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     }
   }, [view]);
 
-  const toggleView = useCallback(() => {
-    const next = otherView(viewRef.current);
-    changeView(next);
-    // If saving fails, the switch still holds on this page.
-    source.viewStore?.save(next).catch(() => undefined);
-  }, [changeView, source]);
-
   /** Opens another reader page as a new history entry (subreddit links). */
   const openPage = useCallback(
     (path: string) => {
@@ -482,7 +553,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
 
   return (
     <OpenPageContext.Provider value={openPage}>
-      <div class="app">
+      <div class="app" ref={appRoot}>
         <TopBar
           title={source.title}
           pickerOpen={pickerOpen}
@@ -494,8 +565,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
           }}
           account={account}
           pinned={overlays.length > 0}
-          view={view}
-          onViewToggle={source.viewStore ? toggleView : undefined}
+          onSettingsClick={source.settingsStore ? openSettings : undefined}
         />
         <main>
           <h1 class="sr-only">{source.title}</h1>
@@ -533,13 +603,13 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
           )}
           <SearchCommunities
             items={communities}
-            hasPosts={posts.length > 0}
+            hasPosts={shownPosts.length > 0}
             onOpen={(path) => {
               go(path, false);
             }}
           />
           <ul class={view === 'card' ? 'feed cards' : 'feed'} ref={feedList}>
-            {posts.map((post) =>
+            {shownPosts.map((post) =>
               view === 'card' ? (
                 <FeedCard
                   key={post.fullname}
@@ -563,11 +633,13 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
             {status === 'loading' && <p class="status">Loading…</p>}
             {status === 'end' && (
               <p class="status">
-                {posts.length > 0
+                {shownPosts.length > 0
                   ? 'You have reached the end.'
-                  : source.search
-                    ? 'Nothing found.'
-                    : 'No posts here.'}
+                  : posts.length > 0
+                    ? 'Every post here is hidden by your filters.'
+                    : source.search
+                      ? 'Nothing found.'
+                      : 'No posts here.'}
               </p>
             )}
             {status === 'error' && (
@@ -587,6 +659,18 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
         {overlays.map((overlay, index) => {
           const active = index === overlays.length - 1;
           const key = `${overlay.kind}-${overlay.fullname}-${String(index)}`;
+          if (overlay.kind === 'settings') {
+            return (
+              <SettingsView
+                key={key}
+                settings={settings}
+                onChange={changeSettings}
+                version={source.version}
+                onClose={closeTop}
+                active={active}
+              />
+            );
+          }
           if (overlay.kind === 'picker') {
             return (
               <FeedPicker

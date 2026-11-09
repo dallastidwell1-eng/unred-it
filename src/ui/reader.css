@@ -1826,3 +1826,282 @@ button {
     font-size: 17px;
   }
 }
+
+/* ---------- Settings (5.8, D-064): a view over the feed, and the options page ---------- */
+
+.settings-view {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  outline: none;
+  animation: slide-in 220ms ease-out;
+}
+
+.settings-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 4px 16px 4px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-column {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 18px 16px 28px;
+}
+
+.settings-title {
+  margin: 0 0 24px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Sections are separated by a hairline and 20 px (5.8). */
+.settings-section + .settings-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.settings-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.setting-note {
+  margin: -8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--faint);
+}
+
+.switch-text .setting-note {
+  margin: 0;
+}
+
+.setting-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dot);
+}
+
+/* Segmented control: 38 px segments in a 3 px track, radius 10/8 (5.8). */
+.segmented {
+  display: grid;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--raised);
+}
+
+.segmented button {
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgba(17, 18, 20, 0.12),
+    inset 0 0 0 1px var(--line2);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Hidden subreddits and words: 32 px chips with a 28 px remove button (5.8). */
+.hidden-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hidden-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 2px 0 10px;
+  border-radius: 9999px;
+  background: var(--raised);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.hidden-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-remove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.text-field {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+
+.text-field::placeholder {
+  color: var(--faint);
+}
+
+.add-button {
+  flex: none;
+  min-width: 64px;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--blue);
+  color: var(--on-blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-button:disabled {
+  background: var(--raised);
+  color: var(--faint);
+  cursor: default;
+}
+
+/* Switch: 46 x 28 px, 22 px knob; "on" uses blue (5.8). */
+.switch-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.switch-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switch {
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  padding: 3px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--marker);
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+
+/* A 44 px touch target around the 28 px switch (layout-spec 1.4). */
+.switch::after {
+  content: '';
+  position: absolute;
+  inset: -8px 0;
+}
+
+.switch .knob {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--knob-off);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: translate 150ms ease-out;
+}
+
+.switch[aria-checked='true'] {
+  background: var(--blue);
+}
+
+.switch[aria-checked='true'] .knob {
+  translate: 18px 0;
+  background: var(--on-blue);
+}
+
+.settings-about {
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+.settings-about p {
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .settings-head {
+    min-height: 56px;
+    padding: 4px max(16px, calc((100% - 576px) / 2));
+  }
+}

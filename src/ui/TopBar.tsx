@@ -6,8 +6,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Account } from '../lib/reddit-client';
 import { searchPath, type SearchInfo } from '../lib/feed-route';
-import type { FeedView } from '../lib/view-setting';
-import { CardsIcon, ChevronDownIcon, RowsIcon, SearchIcon } from './icons';
+import { ChevronDownIcon, GearIcon, SearchIcon } from './icons';
 
 /** Scrolled less than this (px) since the last change: ignore it. */
 const SCROLL_STEP = 6;
@@ -32,8 +31,7 @@ export function TopBar({
   onSearch,
   account,
   pinned,
-  view,
-  onViewToggle,
+  onSettingsClick,
 }: {
   title: string;
   pickerOpen: boolean;
@@ -48,10 +46,8 @@ export function TopBar({
   account: Account | null | undefined;
   /** A view is open over the feed: the bar stays put and "/" does nothing. */
   pinned: boolean;
-  /** The feed view now shown (D-061). */
-  view?: FeedView;
-  /** Switches compact/card. Temporary until the settings page (M6, D-061). */
-  onViewToggle?: () => void;
+  /** Opens Settings over the feed (D-064). Missing: no gear button. */
+  onSettingsClick?: (event: MouseEvent) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [words, setWords] = useState(search?.query ?? '');
@@ -202,16 +198,16 @@ export function TopBar({
       </button>
 
       <div class="bar-end">
-        {onViewToggle && (
-          // The icon shows the view the button switches to.
+        {onSettingsClick && (
           <button
-            class="icon-button view-toggle"
+            class="icon-button settings-open"
             type="button"
-            aria-label={view === 'card' ? 'Switch to compact view' : 'Switch to card view'}
-            title={view === 'card' ? 'Compact view' : 'Card view'}
-            onClick={onViewToggle}
+            aria-label="Settings"
+            aria-haspopup="dialog"
+            title="Settings"
+            onClick={onSettingsClick}
           >
-            {view === 'card' ? <RowsIcon /> : <CardsIcon />}
+            <GearIcon />
           </button>
         )}
         {account === undefined && <span class="account" aria-hidden="true" />}

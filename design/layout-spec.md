@@ -128,6 +128,10 @@ D-062 replaced the separate content layer: an opened post is one page (5.5) with
 - Footer links (48 px rows): "Unred It settings" (in-app), "Reddit account settings" (new tab, with an external-link icon).
 
 ### 5.8 Settings page **[M]**
+- As built in M6 (D-064 to D-066): one panel shown two ways. From the reader's top-bar gear (in the temporary view button's place) it is a full-screen view over the feed with a "Feed" back button in a 52 px bar (56 px from 1024 px wide) and a 560 px column; Back or Esc closes it and focus returns to the gear. From Firefox's add-on settings it is the extension's options page in its own tab, headed "Unred It settings". Changes save at once (no Save button) and every open reader tab follows them.
+- Appearance: Theme (Device, Light, Dark) and Feed view (Compact, Cards). Text size (Default, Large) from the mock-up is not built yet.
+- Filters: Hidden subreddits and Hidden words (chips plus a field with an Add button; Enter adds; a wrong or repeated entry says so under the field), each with a one-line note on where it applies; then the switch "Hide posts I have opened". No NSFW switch (D-065).
+- Selected segment: the surface color with a 1 px `line2` ring and a light shadow, 600 weight. Switch "off": `marker` track; the knob is white in light and `text` in dark; "on": blue track, `onBlue` knob.
 - Heading, then sections separated by a hairline and 20 px: Appearance, Filters, (sync and about note).
 - Segmented controls: 38 px segments inside a 3 px track (44 px total), radius 10/8. Selected segment has a light shadow.
 - Chips for hidden subreddits and words: 32 px, full radius, with a 28 px remove button.

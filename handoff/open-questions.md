@@ -61,3 +61,8 @@ Answer: Deep and Paper grounds, dusty blue, pale brass / brick in dark, bright b
 ### OQ-014: Do Reddit's Data API Terms, Developer Terms or User Agreement cover a personal browser extension that reads the logged-in user's own pages as .json and sends the user's own votes (no API key, no OAuth app, no server)? Does it matter for an AMO listing?
 Status: open · Owner: owner to read or paste the terms (Claude's fetch tools and browser are blocked from redditinc.com and the Reddit help center); before M8 (public listing) · Opened: 2026-11-06, session 002
 Answer:
+
+### OQ-015: Firefox for Android does not sync extension storage (storage.sync) with the Firefox account, so settings cannot follow the user from PC to phone as D-028 planned. What should happen instead?
+Status: closed · Owner: owner, session 005 · Opened: 2026-11-09, session 005
+Evidence: MDN storage.sync page (last modified 2025-08-01): "Firefox for Android does not synchronize data with the user's account. See Firefox bug 1625257." Bug 1625257 "Support |storage.sync| API" (GeckoView, Extensions) is REOPENED with no resolution, no milestone, P3, last changed 2026-10-12; a Mozilla engineer's comment calls the Android version "basically a local-only implementation". On desktop, the user must also have "Add-ons" ticked in Firefox's Sync settings, and data syncs about every 10 minutes or on "Sync Now". Also affects D-039 (History synced between devices).
+Answer: Set each device: the phone keeps its own settings; computers sync with each other through Firefox Sync. Owner chose "Set each device" over a copy/paste settings code, session 005, 2026-11-09. See D-066.

@@ -4,7 +4,6 @@ import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SearchInfo } from '../lib/feed-route';
 import type { Account } from '../lib/reddit-client';
-import type { FeedView } from '../lib/view-setting';
 import { TopBar } from './TopBar';
 
 let box: HTMLDivElement | null = null;
@@ -15,8 +14,7 @@ function show(
     searchIn?: string | null;
     account?: Account | null;
     pinned?: boolean;
-    view?: FeedView;
-    onViewToggle?: () => void;
+    onSettingsClick?: () => void;
   } = {},
 ) {
   const onSearch = vi.fn();
@@ -34,8 +32,7 @@ function show(
         onSearch={onSearch}
         account={options.account === undefined ? { name: 'reader', unread: 0 } : options.account}
         pinned={options.pinned ?? false}
-        view={options.view}
-        onViewToggle={options.onViewToggle}
+        onSettingsClick={options.onSettingsClick}
       />,
       element,
     );
@@ -186,25 +183,19 @@ describe('TopBar hiding (5.1)', () => {
   });
 });
 
-describe('TopBar view button (D-061)', () => {
-  it('is not shown without a way to save the view', () => {
+describe('TopBar settings button (D-064)', () => {
+  it('is not shown without a way to open Settings, and the view button is gone', () => {
     const { box } = show();
+    expect(box.querySelector('.settings-open')).toBeNull();
     expect(box.querySelector('.view-toggle')).toBeNull();
   });
 
-  it('names the view it switches to, and switches on click', () => {
-    const onViewToggle = vi.fn();
-    const { box } = show({ view: 'compact', onViewToggle });
-    const button = box.querySelector<HTMLButtonElement>('.view-toggle');
-    expect(button?.getAttribute('aria-label')).toBe('Switch to card view');
+  it('is named Settings and opens it on click', () => {
+    const onSettingsClick = vi.fn();
+    const { box } = show({ onSettingsClick });
+    const button = box.querySelector<HTMLButtonElement>('.settings-open');
+    expect(button?.getAttribute('aria-label')).toBe('Settings');
     button?.click();
-    expect(onViewToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('offers compact while cards are shown', () => {
-    const { box } = show({ view: 'card', onViewToggle: vi.fn() });
-    expect(box.querySelector('.view-toggle')?.getAttribute('aria-label')).toBe(
-      'Switch to compact view',
-    );
+    expect(onSettingsClick).toHaveBeenCalledTimes(1);
   });
 });

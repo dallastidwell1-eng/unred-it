@@ -24,21 +24,46 @@ import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
 import { themes } from '../ui/tokens';
 import { fitToScreenWidth } from '../ui/viewport';
-import { READER_ON_CLASS } from '../lib/constants';
-import { DEFAULT_VIEW, storageViewStore, type FeedView, type ViewStore } from '../lib/view-setting';
+import { PAGE_THEME, READER_ON_CLASS } from '../lib/constants';
+import { storageOpenedStore, type OpenedStore } from '../lib/opened-posts';
+import {
+  DEFAULT_SETTINGS,
+  storageSettingsStore,
+  type Settings,
+  type SettingsStore,
+} from '../lib/settings';
 
 /** Hides Reddit's page under the reader. Added before Reddit's page draws. */
 function pageCss(): string {
+  const on = `html.${READER_ON_CLASS}`;
+  // The theme chosen in Settings, on <html> (D-024).
+  const chosen = (theme: string) => `${on}[${PAGE_THEME}="${theme}"]`;
   return `
-html.${READER_ON_CLASS}, html.${READER_ON_CLASS} body {
+${on}, ${on} body {
   margin: 0 !important; padding: 0 !important;
   background: ${themes.light.bg} !important;
 }
 @media (prefers-color-scheme: dark) {
-  html.${READER_ON_CLASS}, html.${READER_ON_CLASS} body { background: ${themes.dark.bg} !important; }
+  ${on}, ${on} body { background: ${themes.dark.bg} !important; }
 }
-html.${READER_ON_CLASS} body > :not(${READER_TAG}) { display: none !important; }
+${chosen('dark')}, ${chosen('dark')} body { background: ${themes.dark.bg} !important; }
+${chosen('light')}, ${chosen('light')} body { background: ${themes.light.bg} !important; }
+${on} body > :not(${READER_TAG}) { display: none !important; }
 `;
+}
+
+/** Puts a chosen theme on <html> before the reader draws, so the page never flashes. */
+function markPageTheme(settings: Settings): void {
+  if (settings.theme !== 'device') {
+    document.documentElement.setAttribute(PAGE_THEME, settings.theme);
+  }
+}
+
+interface Saved {
+  settings: Settings;
+  settingsStore: SettingsStore;
+  opened: string[];
+  openedStore: OpenedStore;
 }
 
 /** GET a Reddit .json address as the logged-in user. */
@@ -65,7 +90,7 @@ async function fetchText(path: string): Promise<string> {
   return response.text();
 }
 
-function redditSource(view: FeedView, viewStore: ViewStore): FeedSource {
+function redditSource(saved: Saved): FeedSource {
   const { pathname, search } = window.location;
   const off = new URLSearchParams(search);
   off.set('unred', 'off');
@@ -86,8 +111,8 @@ function redditSource(view: FeedView, viewStore: ViewStore): FeedSource {
     redditUrl: `${pathname}?${off.toString()}`,
     direct,
     loadPost: (postId) => loadPost(fetchJson, postId),
-    view,
-    viewStore,
+    ...saved,
+    version: browser.runtime.getManifest().version,
     async load(after) {
       // Reddit blocks /search.json; search pages are read from their HTML.
       if (isSearchPath(feedPath)) {
@@ -133,15 +158,23 @@ export default defineContentScript({
     // The fonts are local files, so waiting for them is short and avoids a
     // visible font swap.
     const fontsLoaded = loadFonts().catch(() => false);
-    // The saved view is read at the same time, so the feed is drawn in it
-    // from the start (no switch from compact to cards on load).
-    // The setting lives in Firefox Sync storage (D-061, D-028).
-    const viewStore = storageViewStore(browser.storage.sync);
-    const viewLoaded = viewStore.load().catch(() => DEFAULT_VIEW);
+    // The settings and the opened posts are read at the same time, so the
+    // feed is drawn with its view, theme and filters from the start. They
+    // live in Firefox Sync storage (D-028, D-065).
+    const settingsStore = storageSettingsStore(browser.storage.sync);
+    const openedStore = storageOpenedStore(browser.storage.sync);
+    const settingsLoaded = settingsStore
+      .load()
+      .catch(() => DEFAULT_SETTINGS)
+      .then((settings) => {
+        markPageTheme(settings);
+        return settings;
+      });
+    const openedLoaded = openedStore.load().catch(() => []);
     whenBodyReady(() => {
       fitToScreenWidth(document);
-      void Promise.all([viewLoaded, fontsLoaded]).then(([view]) => {
-        mountReader(document.body, redditSource(view, viewStore));
+      void Promise.all([settingsLoaded, openedLoaded, fontsLoaded]).then(([settings, opened]) => {
+        mountReader(document.body, redditSource({ settings, settingsStore, opened, openedStore }));
       });
     });
   },

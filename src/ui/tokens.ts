@@ -160,14 +160,17 @@ export function themeVariables(theme: ThemeName): string {
   });
   // Vote display (color-spec rules 4 and 5): dark = colored score, no chip;
   // light = filled chip with charcoal text.
+  // Settings switches (layout-spec 5.8): the knob of a switch that is off.
   if (theme === 'dark') {
     lines.push('--up-fg: var(--up);', '--up-bg: transparent;');
     lines.push('--down-fg: var(--down);', '--down-bg: transparent;');
     lines.push('--vote-pad-x: 0px;', '--chip-pad: 0;');
+    lines.push('--knob-off: var(--text);');
   } else {
     lines.push('--up-fg: var(--on-vote);', '--up-bg: var(--up);');
     lines.push('--down-fg: var(--on-vote);', '--down-bg: var(--down);');
     lines.push('--vote-pad-x: 6px;', '--chip-pad: 3px 8px;');
+    lines.push('--knob-off: var(--surface);');
   }
   return lines.join('\n');
 }

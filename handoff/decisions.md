@@ -322,3 +322,18 @@ Source: session 004, owner after the phone test: "the Content and The Comments p
 Date: 2026-11-09 · Decider: owner (detail by Claude)
 Decision: Share hands out the normal Reddit link (https://www.reddit.com plus the post's address); it opens the device's share menu where there is one (Firefox for Android) and otherwise copies the link and says "Link copied". Posts and comments can both be saved (a Save button on the post's vote row and in each comment's action row; changes layout-spec 5.5, which had no Save on comments). Writing happens in place: "Comment" in the sort bar opens a text box under it, and "Reply" opens one under that comment, each with Cancel and Post; the new comment appears in place when Reddit accepts it. All of it is sent like votes (form plus modhash, D-047).
 Source: session 004, owner chose the recommended options, then changed Save to "Posts AND comments".
+
+### D-064: Settings opens from a gear in the reader and from Firefox's add-on menu (details D-024)
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: Until the M7 account page exists, Settings is reached two ways. A gear button in the reader's top bar (in the place of the temporary view button, D-061, which goes) opens Settings as a full-screen view over the feed; Back or Esc closes it and the feed keeps its place (D-021). Firefox's own add-on settings (about:addons on the PC, Add-ons on the phone) open the same Settings screen as the extension's options page, in its own tab, which also works when no Reddit page is open. Both show one component and save to one synced store (D-028); every open tab follows a change. M7 adds a way in from the account page (D-024).
+Source: session 005, owner chose "Both".
+
+### D-065: M6 filters: hidden subreddits and words, hide opened posts, no NSFW filter
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: There is no NSFW filter; NSFW posts show as they do now, labeled (owner: "Just show them. We don't care"). Hidden subreddits are left out of Home, Popular, All and search, but a subreddit opened on purpose (its own feed, or a search inside it) still shows its posts. Hidden words remove posts whose title contains the word or phrase (whole words, any letter case) from every feed and search. "Hide posts I have opened" (a switch, off by default) leaves posts the user opened out of feeds; search still finds them. A post opened on the page now stays in place until the feed is loaded again, so the list does not jump. The opened posts are kept as a capped list of post IDs in the extension's synced storage, on the user's own devices only (as D-039 plans for History).
+Source: session 005, owner chose "Mixed feeds + search" for the hide lists and "Hide posts I opened" for seen posts, and answered the NSFW question with "No NSFW filter".
+
+### D-066: The phone keeps its own settings; computers sync (changes D-028)
+Date: 2026-11-09 · Decider: owner
+Decision: Settings and the opened-posts list stay in browser.storage.sync. Firefox for Android does not sync that storage with the Firefox account (OQ-015: MDN, Mozilla bug 1625257, still open), so on the phone they are kept on the phone only and are set there by hand once. Between desktop Firefox installs they sync through Firefox Sync when "Add-ons" is ticked in Firefox's Sync settings. No copy/paste or other transfer is built. If Mozilla adds Android sync, it works with no change in the add-on. M7's History (D-039) has the same limit. Closes OQ-015.
+Source: session 005, owner chose "Set each device" over a copy/paste settings code.
