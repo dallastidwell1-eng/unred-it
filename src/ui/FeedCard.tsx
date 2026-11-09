@@ -1,4 +1,4 @@
-// One feed card (layout-spec 5.3, Lauren's view, D-019): meta line, title,
+// One feed card (layout-spec 5.3, D-019): meta line, title,
 // then a picture, a two-line excerpt or a link chip, and a footer with the
 // score and the comment count. Same behavior as a compact row: the content
 // opens the post, the comment count opens the comments; no actions (D-022).
