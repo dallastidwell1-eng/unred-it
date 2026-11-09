@@ -106,6 +106,26 @@ describe('readerTurnedOff', () => {
 describe('parseFeedPage', () => {
   const child = (data: Record<string, unknown>) => ({ kind: 't3', data });
 
+  it('leaves out promoted (paid) posts, M4 promo checklist', () => {
+    const page = parseFeedPage({
+      kind: 'Listing',
+      data: {
+        after: null,
+        children: [
+          child({ name: 't3_real' }),
+          child({ name: 't3_ad1', promoted: true }),
+          child({ name: 't3_ad2', promoted_by: 'brand' }),
+          child({ name: 't3_ad3', adserver_click_url: 'https://ads.example/click' }),
+          child({ name: 't3_ad4', adserver_imp_pixel: 'https://ads.example/pixel' }),
+          // Not paid: made with the ads tool, or marked not promoted.
+          child({ name: 't3_tool', is_created_from_ads_ui: true }),
+          child({ name: 't3_plain', promoted: false, promoted_by: null }),
+        ],
+      },
+    });
+    expect(page.posts.map((p) => p.fullname)).toEqual(['t3_real', 't3_tool', 't3_plain']);
+  });
+
   it('reads the cursor and the new post fields', () => {
     const page = parseFeedPage({
       kind: 'Listing',

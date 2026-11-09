@@ -18,6 +18,8 @@ export interface SearchHit {
 }
 
 const FULLNAME = /^t3_[a-z0-9]+$/i;
+/** old.reddit.com's markup for a paid post ("promoted"); never shown (M4). */
+const PROMOTED = '.promotedlink, [data-promoted="true"]';
 /** "/r/name/" or "/user/name/" (nothing after the name). */
 const COMMUNITY_PATH = /^\/(r|user)\/([A-Za-z0-9_-]{2,21})\/?$/;
 
@@ -101,8 +103,8 @@ export function parseSearchHtml(html: string): {
     }
   };
 
-  const blocks = Array.from(doc.querySelectorAll('[data-fullname]')).filter((el) =>
-    FULLNAME.test(el.getAttribute('data-fullname') ?? ''),
+  const blocks = Array.from(doc.querySelectorAll('[data-fullname]')).filter(
+    (el) => FULLNAME.test(el.getAttribute('data-fullname') ?? '') && !el.closest(PROMOTED),
   );
   if (blocks.length > 0) {
     for (const block of blocks) {
@@ -111,6 +113,9 @@ export function parseSearchHtml(html: string): {
   } else {
     // Older or changed markup: the result's own title or comments link.
     for (const link of Array.from(doc.querySelectorAll('a.search-title, a.search-comments'))) {
+      if (link.closest(PROMOTED)) {
+        continue;
+      }
       add(
         idFromHref(link.getAttribute('href')),
         link.closest('.search-result') ?? link.parentElement ?? link,

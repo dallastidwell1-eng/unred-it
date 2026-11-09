@@ -290,19 +290,39 @@ function thumbnailFrom(value: string): string | null {
   return value.startsWith('https://') ? value : null;
 }
 
-/** A feed page with its "after" cursor. */
+/**
+ * True for a paid (promoted) post. Reddit's feed lists do not normally carry
+ * ads (old.reddit.com adds them to its own page separately), so this is a
+ * safety net for the promo checklist (docs/promo-checklist.md, M4): any of
+ * Reddit's ad markers is enough. `is_created_from_ads_ui` alone is not: it
+ * only says which tool made the post, and such posts also appear unpaid.
+ */
+export function isPromoted(data: Record<string, unknown>): boolean {
+  return (
+    data.promoted === true ||
+    str(data, 'promoted_by') !== '' ||
+    str(data, 'adserver_click_url') !== '' ||
+    str(data, 'adserver_imp_pixel') !== ''
+  );
+}
+
+/** A feed page with its "after" cursor. Promoted posts are left out (M4). */
 export function parseFeedPage(json: unknown): FeedPage {
-  const posts = parseListing(json);
+  const posts = listingPosts(json, (data) => !isPromoted(data));
   const data = isRecord(json) && isRecord(json.data) ? json.data : {};
   const after = typeof data.after === 'string' && data.after ? data.after : null;
   return { posts, after };
 }
 
-/** Posts from a feed page, for example `/.json` or `/r/firefox/.json`. */
+/** Posts from a listing, for example `/.json` or a thread's post. */
 export function parseListing(json: unknown): Post[] {
+  return listingPosts(json, () => true);
+}
+
+function listingPosts(json: unknown, keep: (data: Record<string, unknown>) => boolean): Post[] {
   const posts: Post[] = [];
   for (const child of listingChildren(json)) {
-    if (isRecord(child) && child.kind === 't3' && isRecord(child.data)) {
+    if (isRecord(child) && child.kind === 't3' && isRecord(child.data) && keep(child.data)) {
       posts.push(toPost(child.data));
     }
   }

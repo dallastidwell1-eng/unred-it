@@ -69,6 +69,25 @@ describe('searchHtmlPath', () => {
 });
 
 describe('parseSearchHtml', () => {
+  it('leaves out promoted (paid) results, M4 promo checklist', () => {
+    const promo = `
+      <div class="search-result search-result-link promotedlink" data-fullname="t3_ad0001">
+        <a class="search-title" href="/r/ads/comments/ad0001/buy/">Buy this</a>
+      </div>
+      <div class="search-result search-result-link" data-promoted="true" data-fullname="t3_ad0002">
+        <a class="search-title" href="/r/ads/comments/ad0002/buy/">Buy that</a>
+      </div>`;
+    const { hits } = parseSearchHtml(promo + PAGE);
+    expect(hits.map((hit) => hit.fullname)).toEqual(['t3_aaa111', 't3_bbb222']);
+  });
+
+  it('leaves out promoted results in the older markup too', () => {
+    const old = `
+      <div class="promotedlink"><a class="search-title" href="/r/ads/comments/ad0003/x/">Ad</a></div>
+      <div class="search-result"><a class="search-title" href="/r/books/comments/ccc333/y/">Real</a></div>`;
+    expect(parseSearchHtml(old).hits.map((hit) => hit.fullname)).toEqual(['t3_ccc333']);
+  });
+
   it('finds the posts in order, without subreddits or links inside post text', () => {
     const { hits } = parseSearchHtml(PAGE);
     expect(hits.map((hit) => hit.fullname)).toEqual(['t3_aaa111', 't3_bbb222']);
