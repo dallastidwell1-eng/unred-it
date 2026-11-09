@@ -1,7 +1,9 @@
-// The comments view (layout-spec 5.5): full screen over the feed or the post.
-// Threads fold with a marker on the thread line (D-026).
+// The post page (D-062, layout-spec 5.4 and 5.5): one full-screen page over
+// the feed that scrolls as one: the post's content and vote bar on top, then
+// the sort bar and the comments. Threads fold with a marker on the thread
+// line (D-026). The feed stays mounted underneath (D-021).
 
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import {
   type CommentNode,
   type CommentSort,
@@ -16,13 +18,19 @@ import { formatAge, formatCount } from '../lib/format';
 import type { Post, VoteDirection } from '../lib/reddit-data';
 import type { CommentFocus } from '../lib/thread-loader';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
-import { VoteBar } from './ContentLayer';
 import { BackIcon, DownIcon, UpIcon } from './icons';
 import { PostMedia, PostText } from './PostMedia';
 import { SubredditLink } from './SubredditLink';
 import { useDialogKeys } from './useDialogKeys';
+import { VoteBar } from './VoteBar';
 
-/** What the comments view needs from Reddit (or from the preview's samples). */
+/** Where the post page opens: at the post, or scrolled to its comments. */
+export type PostPageStart = 'post' | 'comments';
+
+/** The user moving the page themselves: stop keeping the comments at the top. */
+const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
+
+/** What the post page needs from Reddit (or from the preview's samples). */
 export interface CommentsSource {
   loadThread(post: Post, sort: CommentSort, focus?: CommentFocus): Promise<ThreadItem[]>;
   loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
@@ -194,37 +202,76 @@ function Thread({ items, actions }: { items: ThreadItem[]; actions: ThreadAction
   );
 }
 
-export function CommentsView({
+export function PostPage({
   post,
   now,
-  backLabel,
   active,
   source,
   onClose,
   onVotePost,
   focus,
+  start = 'post',
 }: {
   /** Opened from a comment link: show that comment's thread first (D-027). */
   focus?: CommentFocus;
   post: Post;
   now: number;
-  backLabel: string;
   active: boolean;
   source: CommentsSource;
   onClose: () => void;
   onVotePost?: (pressed: VoteButton) => Promise<void>;
+  /** "comments" opens the page scrolled to the comments (D-062). Default: the post. */
+  start?: PostPageStart;
 }) {
   const panel = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const column = useRef<HTMLDivElement>(null);
+  const sortBar = useRef<HTMLDivElement>(null);
   const [sort, setSort] = useState<CommentSort>('confidence');
   const [items, setItems] = useState<ThreadItem[] | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   useDialogKeys(panel, active, onClose);
 
   useEffect(() => {
     panel.current?.focus();
   }, []);
+
+  // Opened from a comment count or a comment link: start at the comments.
+  // Pictures above may still be loading and grow; the page keeps the comments
+  // at the top until the user scrolls or touches it.
+  // Until the comments arrive the page may be too short to scroll, so it
+  // aligns again when they do, and whenever the column changes height.
+  const startAtComments = start === 'comments' || Boolean(focus);
+  const keepAligned = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => {
+    const box = scroller.current;
+    const bar = sortBar.current;
+    const content = column.current;
+    if (!startAtComments || !box || !bar || !content) {
+      return;
+    }
+    const align = () => {
+      box.scrollTop += bar.getBoundingClientRect().top - box.getBoundingClientRect().top;
+    };
+    keepAligned.current = align;
+    align();
+    const resized = new ResizeObserver(align);
+    resized.observe(content);
+    const stop = () => {
+      keepAligned.current = null;
+      resized.disconnect();
+      for (const type of USER_SCROLL_EVENTS) {
+        box.removeEventListener(type, stop);
+      }
+    };
+    for (const type of USER_SCROLL_EVENTS) {
+      box.addEventListener(type, stop, { passive: true });
+    }
+    return stop;
+  }, [startAtComments]);
 
   // A comment link shows that comment's thread until "View all comments".
   const [showAll, setShowAll] = useState(false);
@@ -250,6 +297,12 @@ export function CommentsView({
       current = false;
     };
   }, [post.fullname, sort, attempt, source, focusing, focus]);
+
+  // The comments arrived (or failed): keep them at the top if asked to. A
+  // plain effect, so it runs after each comment's text is filled in.
+  useEffect(() => {
+    keepAligned.current?.();
+  }, [items, error]);
 
   const actions: ThreadActions = {
     now,
@@ -293,11 +346,13 @@ export function CommentsView({
       tabIndex={-1}
       ref={panel}
     >
-      {/* The bar carries the post's name, so the comments start high (owner, session 002). */}
-      <div class="comments-head">
+      {/* The bar carries the post's name, so the comments start high (owner,
+          session 002). At the top of the page the whole title shows; scrolled
+          down, it shrinks to two lines (D-062). */}
+      <div class={scrolled ? 'comments-head scrolled' : 'comments-head'}>
         <button class="back" type="button" onClick={onClose}>
           <BackIcon />
-          {backLabel}
+          Feed
         </button>
         <div class="head-title">
           <div class="meta">
@@ -313,16 +368,24 @@ export function CommentsView({
           </h2>
         </div>
       </div>
-      <div class="comments-scroll">
-        <div class="comments-column">
+      <div
+        class="comments-scroll"
+        ref={scroller}
+        onScroll={(event) => {
+          // Two thresholds, so the bar does not flicker between sizes.
+          const top = event.currentTarget.scrollTop;
+          setScrolled((was) => (was ? top > 4 : top > 24));
+        }}
+      >
+        <div class="comments-column" ref={column}>
           <div class="comments-summary">
-            {/* The post itself, so the comments have their subject in view. */}
+            {/* The post itself: picture, gallery, video, text or link card. */}
             <PostMedia post={post} />
             <div class="summary-actions">
               <VoteBar post={post} onVote={onVotePost} />
             </div>
           </div>
-          <div class="sort-bar">
+          <div class="sort-bar" ref={sortBar}>
             <label class="sort-label">
               <span class="sr-only">Sort comments by</span>
               <select

@@ -94,21 +94,18 @@ The content layer covers the feed with a scrim (see color spec). The feed stays 
 - Meta line on top (14 px top padding), title 18/600, then one of: image 220 px high (full card width), two-line text excerpt, or a link chip.
 - Footer: score and comment-count button, 12 px padding.
 
-### 5.4 Content layer (opened post) **[M]**
-- Drag handle: 36 x 4 px, centered, 8 px from the top (phone).
-- Header row 48 px: "Feed" back button on the left.
-- Body padding: 20 px sides (desktop 40), 28 px bottom.
-- Meta line, then title (8 px above, 16 px below), then content:
+### 5.4 Post content (top of the post page) **[M]**
+D-062 replaced the separate content layer: an opened post is one page (5.5) with this content at its top, then the vote row, the sort bar and the comments. The drag handle, the layer's own header and its action bar are gone. The content:
   - Image: radius 12, full width (300 px tall placeholder on phone; real images use their own ratio, max height 70% of the viewport **[P]**).
   - Text: body style.
   - Link: preview card (radius 14) with image (at its own proportions, capped at 70% of the viewport height; D-056 replaced the fixed 170 px), source, title, summary, and one full-width "Open article" button 44 px high that opens a new tab (D-025).
   - Image posts show without side bars; galleries show one picture at a time with Previous/Next buttons and a counter (D-055); Reddit videos play in place, with sound (D-054).
-- Action bar: 52 px high, hairlines above and below. Order: upvote, score, downvote, comment-count button, flexible space, save, share. Each icon button 44 x 44.
 - Vote display: see color spec section "Rules" 4 and 5. Score chip padding 3 x 8 px, radius 7.
 
-### 5.5 Comments view **[M]**
-- Full screen over the feed. Header 52 px with a back button ("Feed" or "Post", whichever you came from).
-- Post summary: meta, title, then the vote/save/share row (48 px).
+### 5.5 Post page (content and comments) **[M]**
+- Full screen over the feed; scrolls as one page (D-062). Header 52 px with a "Feed" back button, the meta line and the title. At the top of the page the whole title shows; scrolled down, it shrinks to two lines.
+- Then the post content (5.4) and the vote/save/share row (48 px; save and share come in M5).
+- Opened from a post's title, picture, excerpt or link chip: starts at the top. Opened from its comment count or a comment link: starts with the sort bar at the top.
 - Sort bar: 44 px, "Best" dropdown, comment count, "Comment" button (32 px high).
 - Comment indent step: 22 px per level. First level starts 16 px from the edge.
 - Thread line: 1 px, `line2`, at x = (comment's left edge + 7 px), running the full height of its children.

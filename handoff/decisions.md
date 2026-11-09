@@ -312,3 +312,8 @@ Source: session 003, owner test: search.json blocked page, normal search page wi
 Date: 2026-11-09 · Decider: owner (detail by Claude)
 Decision: The feed view (compact or card) is saved in the extension's synced storage (browser.storage.sync, D-028), as the first setting of the M6 settings page (D-024). Compact is the default. Until M6, a small view button in the top bar, beside the account button, switches between compact and card and saves the choice at once; every open reader tab follows the change. M6 moves the control to the settings page and removes the temporary button; the saved value carries over unchanged.
 Source: session 004, owner chose "Saved choice, temp control" over a plain top-bar switch.
+
+### D-062: One post page: content on top, comments underneath (changes D-021, layout-spec 5.4)
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: An opened post is one full-screen page that scrolls as one: the post's content (picture, gallery, video, text or link card, D-025, D-054 to D-056), its vote bar, then the sort bar and the comments. There is no separate content layer. Tapping a post's title, picture, excerpt or link chip opens the page at the top; tapping its comment count opens the same page scrolled to the comments. Back returns to the same place in the feed (D-021 otherwise stands).
+Source: session 004, owner after the phone test: "the Content and The Comments page should be the same ... Content up top, comments underneath, as one scrollable page."

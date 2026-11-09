@@ -1,7 +1,7 @@
 {
   "name": "unred-it",
   "description": "A clean, single-column reader for old.reddit.com, in your own logged-in Firefox.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "license": "MIT",

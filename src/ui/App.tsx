@@ -1,6 +1,6 @@
 // The rebuilt reader (M4): top bar, the feed (compact rows or cards, D-061)
-// with endless scrolling, and views stacked over it: an opened post (content
-// layer) and comments.
+// with endless scrolling, and views stacked over it: the post page (content
+// on top, comments underneath, D-062) and the feed picker.
 // The feed stays mounted underneath, so its place never changes (D-021).
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -14,11 +14,10 @@ import type { CommentFocus } from '../lib/thread-loader';
 import { DEFAULT_VIEW, otherView, type FeedView, type ViewStore } from '../lib/view-setting';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { isPlainClick } from './clicks';
-import { CommentsView } from './CommentsView';
-import { ContentLayer } from './ContentLayer';
 import { FeedCard } from './FeedCard';
 import { FeedPicker } from './FeedPicker';
 import { FeedRow } from './FeedRow';
+import { PostPage, type PostPageStart } from './PostPage';
 import { SearchCommunities } from './SearchCommunities';
 import { OpenPageContext, SubredditLink } from './SubredditLink';
 import { TopBar } from './TopBar';
@@ -67,9 +66,11 @@ type Status = 'loading' | 'idle' | 'error' | 'end';
 
 /** One view over the feed. The picker has no post, so its fullname is empty. */
 interface Overlay {
-  kind: 'post' | 'comments' | 'picker';
+  kind: 'post' | 'picker';
   fullname: string;
-  /** Comments opened from a comment link: that comment's thread. */
+  /** Opened from a comment count: start at the comments (D-062). */
+  start?: PostPageStart;
+  /** Opened from a comment link: that comment's thread. */
   focus?: CommentFocus;
 }
 
@@ -127,7 +128,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
 
   const openComments = useCallback(
     (post: Post, from: HTMLElement) => {
-      push({ kind: 'comments', fullname: post.fullname }, from);
+      push({ kind: 'post', fullname: post.fullname, start: 'comments' }, from);
     },
     [push],
   );
@@ -148,7 +149,8 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
 
   // A post or comment address opened directly (D-027). This history entry
   // becomes the subreddit's feed, and the post's own address goes on top with
-  // its comments open; Back then shows the feed without a reload.
+  // the post page open (D-062; a comment address starts at that comment's
+  // thread); Back then shows the feed without a reload.
   useEffect(() => {
     const route = source.direct;
     const loadPost = source.loadPost;
@@ -162,7 +164,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
           return;
         }
         setExtraPosts((list) => [...list, post]);
-        const overlay: Overlay = { kind: 'comments', fullname: post.fullname };
+        const overlay: Overlay = { kind: 'post', fullname: post.fullname };
         if (route.commentId) {
           overlay.focus = { commentId: route.commentId, context: route.context };
         }
@@ -578,32 +580,17 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
           if (!post) {
             return null;
           }
-          if (overlay.kind === 'post') {
-            return (
-              <ContentLayer
-                key={key}
-                post={post}
-                now={now}
-                active={active}
-                onClose={closeTop}
-                onVote={voteFor(post)}
-                onOpenComments={(from) => {
-                  openComments(post, from);
-                }}
-              />
-            );
-          }
           return (
-            <CommentsView
+            <PostPage
               key={key}
               post={post}
               now={now}
               active={active}
-              backLabel={overlays[index - 1]?.kind === 'post' ? 'Post' : 'Feed'}
               source={source}
               onClose={closeTop}
               onVotePost={voteFor(post)}
               focus={overlay.focus}
+              start={overlay.start}
             />
           );
         })}
