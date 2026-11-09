@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Account } from '../lib/reddit-client';
 import { searchPath, type SearchInfo } from '../lib/feed-route';
-import { ChevronDownIcon, SearchIcon } from './icons';
+import type { FeedView } from '../lib/view-setting';
+import { CardsIcon, ChevronDownIcon, RowsIcon, SearchIcon } from './icons';
 
 /** Scrolled less than this (px) since the last change: ignore it. */
 const SCROLL_STEP = 6;
@@ -31,6 +32,8 @@ export function TopBar({
   onSearch,
   account,
   pinned,
+  view,
+  onViewToggle,
 }: {
   title: string;
   pickerOpen: boolean;
@@ -45,6 +48,10 @@ export function TopBar({
   account: Account | null | undefined;
   /** A view is open over the feed: the bar stays put and "/" does nothing. */
   pinned: boolean;
+  /** The feed view now shown (D-061). */
+  view?: FeedView;
+  /** Switches compact/card. Temporary until the settings page (M6, D-061). */
+  onViewToggle?: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [words, setWords] = useState(search?.query ?? '');
@@ -194,28 +201,42 @@ export function TopBar({
         <SearchIcon size={20} />
       </button>
 
-      {account === undefined && <span class="account" aria-hidden="true" />}
-      {account === null && (
-        <a class="account signin" href="/login">
-          Log in
-        </a>
-      )}
-      {account && (
-        <a
-          class="account"
-          href={`/user/${account.name}/`}
-          aria-label={
-            account.unread > 0
-              ? `Your profile, u/${account.name}, ${String(account.unread)} unread`
-              : `Your profile, u/${account.name}`
-          }
-        >
-          <span class="avatar-me" aria-hidden="true">
-            {account.name.charAt(0).toUpperCase()}
-          </span>
-          {account.unread > 0 && <span class="unread-dot" aria-hidden="true" />}
-        </a>
-      )}
+      <div class="bar-end">
+        {onViewToggle && (
+          // The icon shows the view the button switches to.
+          <button
+            class="icon-button view-toggle"
+            type="button"
+            aria-label={view === 'card' ? 'Switch to compact view' : 'Switch to card view'}
+            title={view === 'card' ? 'Compact view' : 'Card view'}
+            onClick={onViewToggle}
+          >
+            {view === 'card' ? <RowsIcon /> : <CardsIcon />}
+          </button>
+        )}
+        {account === undefined && <span class="account" aria-hidden="true" />}
+        {account === null && (
+          <a class="account signin" href="/login">
+            Log in
+          </a>
+        )}
+        {account && (
+          <a
+            class="account"
+            href={`/user/${account.name}/`}
+            aria-label={
+              account.unread > 0
+                ? `Your profile, u/${account.name}, ${String(account.unread)} unread`
+                : `Your profile, u/${account.name}`
+            }
+          >
+            <span class="avatar-me" aria-hidden="true">
+              {account.name.charAt(0).toUpperCase()}
+            </span>
+            {account.unread > 0 && <span class="unread-dot" aria-hidden="true" />}
+          </a>
+        )}
+      </div>
     </header>
   );
 }

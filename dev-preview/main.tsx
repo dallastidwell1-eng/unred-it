@@ -9,6 +9,7 @@ import { feedTitle, searchInfo } from '../src/lib/feed-route';
 import { postRoute } from '../src/lib/reddit-links';
 import type { Community, FeedPage, Post } from '../src/lib/reddit-data';
 import { sortSubreddits, type Subreddit } from '../src/lib/subreddits';
+import { parseView, VIEW_KEY, type ViewStore } from '../src/lib/view-setting';
 import type { FeedSource } from '../src/ui/App';
 import { mountReader } from '../src/ui/mount';
 
@@ -150,6 +151,7 @@ const PAGE_1: Post[] = [
     score: 208,
     numComments: 6,
     thumbnailUrl: tile('#2B3340', 'img'),
+    previewImage: { url: tile('#2B3340', 'video frame', 1280, 720), width: 1280, height: 720 },
     createdUtc: NOW_S - 3600 * 10,
   }),
   post({
@@ -158,6 +160,7 @@ const PAGE_1: Post[] = [
     isGallery: true,
     score: 77,
     numComments: 3,
+    thumbnailUrl: tile('#3A3C40', 'img'),
     gallery: [
       {
         url: tile('#3A3C40', 'picture 1 (wide)', 1080, 720),
@@ -376,6 +379,33 @@ const source: FeedSource = {
     return after ? { posts: PAGE_2, after: null } : { posts: PAGE_1, after: 'page2' };
   },
 };
+
+// The view setting (D-061) in this page's localStorage, standing in for
+// Firefox Sync storage. ?view=card or ?view=compact sets it on load.
+const previewViews: ViewStore = {
+  load: () => Promise.resolve(parseView(localStorage.getItem(VIEW_KEY))),
+  save(view) {
+    localStorage.setItem(VIEW_KEY, view);
+    return Promise.resolve();
+  },
+  watch(onChange) {
+    const listener = (event: StorageEvent) => {
+      if (event.key === VIEW_KEY) {
+        onChange(parseView(event.newValue));
+      }
+    };
+    window.addEventListener('storage', listener);
+    return () => {
+      window.removeEventListener('storage', listener);
+    };
+  },
+};
+const askedView = params.get('view');
+if (askedView) {
+  localStorage.setItem(VIEW_KEY, parseView(askedView));
+}
+source.view = await previewViews.load();
+source.viewStore = previewViews;
 
 const theme = params.get('theme');
 const host = mountReader(document.body, source, 'Preview with sample data', 'open');

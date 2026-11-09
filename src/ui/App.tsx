@@ -1,8 +1,9 @@
-// The rebuilt reader (M4): top bar, the compact feed with endless scrolling,
-// and views stacked over it: an opened post (content layer) and comments.
+// The rebuilt reader (M4): top bar, the feed (compact rows or cards, D-061)
+// with endless scrolling, and views stacked over it: an opened post (content
+// layer) and comments.
 // The feed stays mounted underneath, so its place never changes (D-021).
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
 import { searchPath, type SearchInfo } from '../lib/feed-route';
 import type { Account } from '../lib/reddit-client';
@@ -10,10 +11,12 @@ import type { Community, FeedPage, Post, VoteDirection } from '../lib/reddit-dat
 import type { PostRoute } from '../lib/reddit-links';
 import { currentFeed, type Subreddit } from '../lib/subreddits';
 import type { CommentFocus } from '../lib/thread-loader';
+import { DEFAULT_VIEW, otherView, type FeedView, type ViewStore } from '../lib/view-setting';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { isPlainClick } from './clicks';
 import { CommentsView } from './CommentsView';
 import { ContentLayer } from './ContentLayer';
+import { FeedCard } from './FeedCard';
 import { FeedPicker } from './FeedPicker';
 import { FeedRow } from './FeedRow';
 import { SearchCommunities } from './SearchCommunities';
@@ -48,6 +51,16 @@ export interface FeedSource {
   direct?: PostRoute | null;
   /** One post by its ID, for `direct`. */
   loadPost?: (postId: string) => Promise<Post>;
+  /** The saved feed view, read before the reader is drawn (D-061). Default compact. */
+  view?: FeedView;
+  /** Saves and watches the feed view. Missing: the view button is not shown. */
+  viewStore?: ViewStore;
+}
+
+/** The post at the top of the screen and how far it is from the top (px). */
+interface ScrollAnchor {
+  fullname: string;
+  top: number;
 }
 
 type Status = 'loading' | 'idle' | 'error' | 'end';
@@ -366,6 +379,69 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
     };
   }, [status, loadMore]);
 
+  // The feed view (D-061). A change in another tab or on another device
+  // (Firefox Sync, D-028) shows here too.
+  const [view, setView] = useState<FeedView>(source.view ?? DEFAULT_VIEW);
+  const feedList = useRef<HTMLUListElement>(null);
+  const anchor = useRef<ScrollAnchor | null>(null);
+
+  /** Remembers the post at the top of the screen, to keep it there after a switch. */
+  const rememberTop = useCallback(() => {
+    anchor.current = null;
+    const list = feedList.current;
+    if (!list || window.scrollY < 1) {
+      return;
+    }
+    // The first post not hidden under the top bar. A post cut off at the top
+    // comes back whole, just under the bar.
+    const bar = (list.getRootNode() as ParentNode).querySelector('.topbar');
+    const barBottom = Math.max(0, bar?.getBoundingClientRect().bottom ?? 0);
+    for (const item of Array.from(list.children)) {
+      const box = item.getBoundingClientRect();
+      if (box.bottom > barBottom && item instanceof HTMLElement && item.dataset.fullname) {
+        anchor.current = { fullname: item.dataset.fullname, top: Math.max(box.top, barBottom) };
+        return;
+      }
+    }
+  }, []);
+
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const changeView = useCallback(
+    (next: FeedView) => {
+      if (next !== viewRef.current) {
+        rememberTop();
+        setView(next);
+      }
+    },
+    [rememberTop],
+  );
+
+  useEffect(() => source.viewStore?.watch(changeView), [source, changeView]);
+
+  // After a switch, scroll so the same post is where it was.
+  useLayoutEffect(() => {
+    const kept = anchor.current;
+    anchor.current = null;
+    const list = feedList.current;
+    if (!kept || !list) {
+      return;
+    }
+    const item = Array.from(list.children).find(
+      (child) => child instanceof HTMLElement && child.dataset.fullname === kept.fullname,
+    );
+    if (item) {
+      window.scrollBy(0, item.getBoundingClientRect().top - kept.top);
+    }
+  }, [view]);
+
+  const toggleView = useCallback(() => {
+    const next = otherView(viewRef.current);
+    changeView(next);
+    // If saving fails, the switch still holds on this page.
+    source.viewStore?.save(next).catch(() => undefined);
+  }, [changeView, source]);
+
   /** Opens another reader page as a new history entry (subreddit links). */
   const openPage = useCallback(
     (path: string) => {
@@ -393,6 +469,8 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
           }}
           account={account}
           pinned={overlays.length > 0}
+          view={view}
+          onViewToggle={source.viewStore ? toggleView : undefined}
         />
         <main>
           <h1 class="sr-only">{source.title}</h1>
@@ -435,16 +513,26 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
               go(path, false);
             }}
           />
-          <ul class="feed">
-            {posts.map((post) => (
-              <FeedRow
-                key={post.fullname}
-                post={post}
-                now={now}
-                onOpen={openPost}
-                onOpenComments={openComments}
-              />
-            ))}
+          <ul class={view === 'card' ? 'feed cards' : 'feed'} ref={feedList}>
+            {posts.map((post) =>
+              view === 'card' ? (
+                <FeedCard
+                  key={post.fullname}
+                  post={post}
+                  now={now}
+                  onOpen={openPost}
+                  onOpenComments={openComments}
+                />
+              ) : (
+                <FeedRow
+                  key={post.fullname}
+                  post={post}
+                  now={now}
+                  onOpen={openPost}
+                  onOpenComments={openComments}
+                />
+              ),
+            )}
           </ul>
           <div ref={sentinel} aria-live="polite">
             {status === 'loading' && <p class="status">Loading…</p>}

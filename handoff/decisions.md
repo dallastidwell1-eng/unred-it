@@ -307,3 +307,8 @@ Source: session 003, owner chose "Your Reddit profile" over Reddit's inbox or a 
 Date: 2026-11-07 · Decider: Claude (technical detail of D-058, from the owner's test)
 Decision: Reddit blocks /search.json for everyone, logged in or not ("You've been blocked by network security", owner's Firefox, session 003), while its normal search page works. The reader reads the post IDs and the next-page cursor from the search page's HTML (src/lib/search-page.ts), then loads the full posts from /by_id/<ids>.json, a normal listing address (D-047). If /by_id/ is refused too, the rows are built from what the search page shows (title, subreddit, author, score, comments, age). This depends on old.reddit.com's search page markup and may need care if Reddit changes it.
 Source: session 003, owner test: search.json blocked page, normal search page with results.
+
+### D-061: Feed view is a saved setting; a temporary switch until M6
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: The feed view (compact or card) is saved in the extension's synced storage (browser.storage.sync, D-028), as the first setting of the M6 settings page (D-024). Compact is the default. Until M6, a small view button in the top bar, beside the account button, switches between compact and card and saves the choice at once; every open reader tab follows the change. M6 moves the control to the settings page and removes the temporary button; the saved value carries over unchanged.
+Source: session 004, owner chose "Saved choice, temp control" over a plain top-bar switch.

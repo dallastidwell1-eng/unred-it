@@ -2,8 +2,8 @@
 
 import { formatAge, formatCount } from '../lib/format';
 import type { Post } from '../lib/reddit-data';
-import { isPlainClick } from './clicks';
-import { CommentIcon, DownIcon, LinesIcon, LinkIcon, UpIcon } from './icons';
+import { feedClicks, FeedScore, type Opener } from './feed-parts';
+import { CommentIcon, LinesIcon, LinkIcon } from './icons';
 import { SubredditLink } from './SubredditLink';
 
 export function FeedRow({
@@ -14,27 +14,14 @@ export function FeedRow({
 }: {
   post: Post;
   now: number;
-  onOpen: (post: Post, opener: HTMLElement) => void;
-  onOpenComments: (post: Post, opener: HTMLElement) => void;
+  onOpen: Opener;
+  onOpenComments: Opener;
 }) {
   const href = post.permalink;
-  const open = (event: MouseEvent) => {
-    if (isPlainClick(event)) {
-      event.preventDefault();
-      onOpen(post, event.currentTarget as HTMLElement);
-    }
-  };
-  const openComments = (event: MouseEvent) => {
-    if (isPlainClick(event)) {
-      event.preventDefault();
-      onOpenComments(post, event.currentTarget as HTMLElement);
-    }
-  };
-  const vote = post.likes === true ? 'up' : post.likes === false ? 'down' : '';
-  const voteLabel = vote === 'up' ? ', you upvoted' : vote === 'down' ? ', you downvoted' : '';
+  const { open, openComments } = feedClicks(post, onOpen, onOpenComments);
 
   return (
-    <li class="row">
+    <li class="row" data-fullname={post.fullname}>
       {/* The title is the one tab stop; the thumbnail is a mouse/touch shortcut. */}
       <a class="thumb" href={href} tabIndex={-1} aria-hidden="true" onClick={open}>
         {post.thumbnailUrl ? (
@@ -62,12 +49,7 @@ export function FeedRow({
           <span class="dot-sep" aria-hidden="true" />
           <span>{formatAge(post.createdUtc, now)}</span>
           <span class="dot-sep" aria-hidden="true" />
-          <span class={`score ${vote}`}>
-            {vote === 'down' ? <DownIcon /> : <UpIcon />}
-            <span class="sr-only">Score </span>
-            {formatCount(post.score)}
-            <span class="sr-only">{voteLabel}</span>
-          </span>
+          <FeedScore post={post} />
           <span class="dot-sep" aria-hidden="true" />
           <a class="comments" href={href} onClick={openComments}>
             <CommentIcon />

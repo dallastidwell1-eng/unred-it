@@ -105,3 +105,43 @@ export function ExternalIcon({ size = 16 }: { size?: number }) {
     </Icon>
   );
 }
+
+/** Card view: two stacked cards. */
+export function CardsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <rect x="4" y="3" width="16" height="8" rx="2" />
+      <rect x="4" y="13" width="16" height="8" rx="2" />
+    </Icon>
+  );
+}
+
+/** Compact view: rows with a small picture each. */
+export function RowsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <rect x="3" y="4" width="5" height="5" rx="1" />
+      <rect x="3" y="15" width="5" height="5" rx="1" />
+      <path d="M12 6.5h9M12 17.5h9" />
+    </Icon>
+  );
+}
+
+/** Play mark on a video's picture (filled triangle). */
+export function PlayIcon({ size = 20 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+    </Icon>
+  );
+}
+
+/** Gallery mark: stacked pictures. */
+export function GalleryIcon({ size = 14 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <rect x="7" y="7" width="14" height="14" rx="2" />
+      <path d="M17 3H5a2 2 0 0 0-2 2v12" />
+    </Icon>
+  );
+}

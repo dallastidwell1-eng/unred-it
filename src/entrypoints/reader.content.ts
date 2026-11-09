@@ -3,6 +3,7 @@
 // wikis, settings), and any page opened with ?unred=off, keep Reddit's own
 // view for now.
 
+import { browser } from 'wxt/browser';
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import {
   feedJsonPath,
@@ -23,6 +24,7 @@ import { loadFonts } from '../ui/fonts';
 import { mountReader, READER_TAG } from '../ui/mount';
 import { themes } from '../ui/tokens';
 import { READER_ON_CLASS, SPIKE_HASH } from '../lib/constants';
+import { DEFAULT_VIEW, storageViewStore, type FeedView, type ViewStore } from '../lib/view-setting';
 
 /** Hides Reddit's page under the reader. Added before Reddit's page draws. */
 function pageCss(): string {
@@ -62,7 +64,7 @@ async function fetchText(path: string): Promise<string> {
   return response.text();
 }
 
-function redditSource(): FeedSource {
+function redditSource(view: FeedView, viewStore: ViewStore): FeedSource {
   const { pathname, search } = window.location;
   const off = new URLSearchParams(search);
   off.set('unred', 'off');
@@ -81,6 +83,8 @@ function redditSource(): FeedSource {
     redditUrl: `${pathname}?${off.toString()}`,
     direct,
     loadPost: (postId) => loadPost(fetchJson, postId),
+    view,
+    viewStore,
     async load(after) {
       // Reddit blocks /search.json; search pages are read from their HTML.
       if (isSearchPath(feedPath)) {
@@ -123,9 +127,14 @@ export default defineContentScript({
     // The fonts are local files, so waiting for them is short and avoids a
     // visible font swap.
     const fontsLoaded = loadFonts().catch(() => false);
+    // The saved view is read at the same time, so the feed is drawn in it
+    // from the start (no switch from compact to cards on load).
+    // The setting lives in Firefox Sync storage (D-061, D-028).
+    const viewStore = storageViewStore(browser.storage.sync);
+    const viewLoaded = viewStore.load().catch(() => DEFAULT_VIEW);
     whenBodyReady(() => {
-      void fontsLoaded.then(() => {
-        mountReader(document.body, redditSource());
+      void Promise.all([viewLoaded, fontsLoaded]).then(([view]) => {
+        mountReader(document.body, redditSource(view, viewStore));
       });
     });
   },
