@@ -39,7 +39,21 @@ describe('cardContent', () => {
     expect(cardContent(post, parser)).toMatchObject({ kind: 'image', video: true });
   });
 
-  it('never shows a picture for an NSFW post', () => {
+  it('shows the picture of an NSFW post when Reddit sends its thumbnail (D-067)', () => {
+    const post = one({
+      post_hint: 'image',
+      over_18: true,
+      thumbnail,
+      preview,
+      domain: 'i.redd.it',
+    });
+    expect(cardContent(post, parser)).toMatchObject({
+      kind: 'image',
+      url: preview.images[0]?.source.url,
+    });
+  });
+
+  it('shows no NSFW picture when Reddit hides the thumbnail (a Reddit setting)', () => {
     const post = one({
       post_hint: 'image',
       over_18: true,

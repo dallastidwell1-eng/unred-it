@@ -24,6 +24,7 @@ import { FeedRow } from './FeedRow';
 import { PostPage, type PostPageStart } from './PostPage';
 import { SearchCommunities } from './SearchCommunities';
 import { SettingsView } from './SettingsPage';
+import { setThemeColor } from './theme-color';
 import { OpenPageContext, SubredditLink } from './SubredditLink';
 import { TopBar } from './TopBar';
 
@@ -502,6 +503,8 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
       host?.setAttribute('data-theme', settings.theme);
       page.setAttribute(PAGE_THEME, settings.theme);
     }
+    // The browser's own bars, where it colors them from the page.
+    setThemeColor(document, settings.theme);
   }, [settings.theme]);
 
   // The filters (D-065). Posts opened on this page stay where they are until

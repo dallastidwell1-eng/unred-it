@@ -93,7 +93,7 @@ The content layer covers the feed with a scrim (see color spec). The feed stays 
 - Radius 14, 1 px border, `surface` fill.
 - Meta line on top (14 px top padding), title 18/600, then one of: image 220 px high (full card width), two-line text excerpt, or a link chip.
 - Footer: score and comment-count button, 12 px padding.
-- As built (session 004, owner-tested): the picture shows for image, video and gallery posts only, and never for NSFW or spoiler posts (they get the link chip); 300 px high from 768 px wide, so wide cards do not crop to a strip; videos show a play mark, galleries a picture-count badge; link posts show the chip, not the article picture; the excerpt hides spoilers as "[spoiler]". A temporary top-bar button switches compact/card (D-061).
+- As built (session 004, owner-tested): the picture shows for image, video and gallery posts only, and never for spoiler posts (they get the link chip); NSFW posts show their picture when Reddit sends a thumbnail for them (the user's Reddit setting), since D-067; 300 px high from 768 px wide, so wide cards do not crop to a strip; videos show a play mark, galleries a picture-count badge; link posts show the chip, not the article picture; the excerpt hides spoilers as "[spoiler]". A temporary top-bar button switches compact/card (D-061).
 
 ### 5.4 Post content (top of the post page) **[M]**
 D-062 replaced the separate content layer: an opened post is one page (5.5) with this content at its top, then the vote row, the sort bar and the comments. The drag handle, the layer's own header and its action bar are gone. The content:
@@ -112,7 +112,7 @@ D-062 replaced the separate content layer: an opened post is one page (5.5) with
 - Thread line: 1 px, `line2`, at x = (comment's left edge + 7 px), running the full height of its children.
 - Fold marker: 16 px circle with a 1 px `marker` ring, on top of the thread line at the comment's header, in a 44 x 44 target. Minus sign when open, plus sign when folded (D-026).
 - Folded branch shows "N replies hidden" in the meta style.
-- Comment: header (author, age, points) 24 px min; body 4 px below; action row (up, down, Reply, Save) with 40 px targets (D-063 added Save).
+- Comment: header (author, age, points) 24 px min; the author's name, and u/name in the post page's bar, link to their Reddit profile, plain until hovered (D-068); body 4 px below; action row (up, down, Reply, Save) with 40 px targets (D-063 added Save).
 - Writing (D-063): "Comment" opens a text box under the sort bar; "Reply" opens one under that comment. Box: 96 px min, radius 10, then a hint ("Reddit formatting (markdown) works."), Cancel, and a blue Post button (40 px). Esc closes an empty box only; Ctrl+Enter posts.
 - Save and Share sit at the right end of the post's vote row; Saved shows in blue. Share opens the device's share menu, or copies the link ("Link copied"); if copying fails, the link shows in a field to copy by hand.
 

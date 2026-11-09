@@ -25,6 +25,7 @@ import { PostMedia, PostText } from './PostMedia';
 import { PostTools } from './PostTools';
 import { SubredditLink } from './SubredditLink';
 import { useDialogKeys } from './useDialogKeys';
+import { UserLink } from './UserLink';
 import { VoteBar } from './VoteBar';
 
 /** Where the post page opens: at the post, or scrolled to its comments. */
@@ -222,10 +223,13 @@ function CommentItem({ comment, actions }: { comment: CommentNode; actions: Thre
             {folded ? '+' : '−'}
           </span>
         </button>
-        <span class={`comment-author${comment.isSubmitter ? ' op' : ''}`}>
+        <UserLink
+          name={comment.author}
+          className={`comment-author${comment.isSubmitter ? ' op' : ''}`}
+        >
           {comment.author}
           {comment.isSubmitter && <span class="sr-only"> (post author)</span>}
-        </span>
+        </UserLink>
         {comment.distinguished === 'moderator' && <span class="tag">MOD</span>}
         {comment.distinguished === 'admin' && <span class="tag">ADMIN</span>}
         {comment.stickied && <span class="tag">Pinned</span>}
@@ -536,7 +540,7 @@ export function PostPage({
             {post.over18 && <span class="tag">NSFW</span>}
             <SubredditLink name={post.subreddit} />
             <span class="dot-sep" aria-hidden="true" />
-            <span>u/{post.author}</span>
+            <UserLink name={post.author} />
             <span class="dot-sep" aria-hidden="true" />
             <span>{formatAge(post.createdUtc, now)}</span>
           </div>

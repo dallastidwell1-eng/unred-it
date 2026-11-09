@@ -337,3 +337,13 @@ Source: session 005, owner chose "Mixed feeds + search" for the hide lists and "
 Date: 2026-11-09 · Decider: owner
 Decision: Settings and the opened-posts list stay in browser.storage.sync. Firefox for Android does not sync that storage with the Firefox account (OQ-015: MDN, Mozilla bug 1625257, still open), so on the phone they are kept on the phone only and are set there by hand once. Between desktop Firefox installs they sync through Firefox Sync when "Add-ons" is ticked in Firefox's Sync settings. No copy/paste or other transfer is built. If Mozilla adds Android sync, it works with no change in the add-on. M7's History (D-039) has the same limit. Closes OQ-015.
 Source: session 005, owner chose "Set each device" over a copy/paste settings code.
+
+### D-067: Cards show NSFW pictures (changes the session 004 card rule)
+Date: 2026-11-09 · Decider: owner
+Decision: Cards show a picture for NSFW posts like any other post, wherever Reddit sends a thumbnail for it (that follows the user's own Reddit setting for NSFW thumbnails, as compact rows already do). Spoiler posts still show no picture. The NSFW tag stays. Text size (Default/Large) from the mock-up stays unbuilt (owner: "That's fine").
+Source: session 005, owner after the M6 test: "Yes, show NSFW pictures"; "That's fine" on Text size.
+
+### D-068: Author names are links
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: Wherever the reader shows an author (u/name on the post page, each comment's author), the name is a link to that user's profile on old.reddit.com (/user/name/), opened in the same tab like any link (Ctrl or middle click opens a new tab). Reddit's profile page shows as Reddit's own page until profiles are rebuilt (not planned). "[deleted]" authors are not links. The OP blue on comment authors stays. Settles the M7 author-link question.
+Source: session 005, owner: "u/name should be a link".

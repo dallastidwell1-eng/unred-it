@@ -199,6 +199,11 @@ const PAGE_1: Post[] = [
     title: 'Sensitive post example',
     subreddit: 'example',
     over18: true,
+    // Reddit sends an NSFW thumbnail when the user's Reddit setting allows it;
+    // cards then show the picture (D-067).
+    postHint: 'image',
+    thumbnailUrl: tile('#33363B', 'nsfw'),
+    previewImage: { url: tile('#33363B', 'NSFW picture', 1080, 720), width: 1080, height: 720 },
     score: 218,
     numComments: 5,
     createdUtc: NOW_S - 3600 * 11,

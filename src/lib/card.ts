@@ -23,8 +23,10 @@ export const EXCERPT_MAX = 280;
 
 /**
  * Picks the card's content. Pictures show only where Reddit itself would show
- * a thumbnail in a feed: never for NSFW posts, and not for spoilers or posts
- * with no thumbnail (Reddit then sends no https thumbnail).
+ * a thumbnail in a feed: not for spoilers or posts with no thumbnail, nor for
+ * NSFW posts when the user's Reddit setting hides their thumbnails (Reddit
+ * then sends no https thumbnail). NSFW posts with a thumbnail show their
+ * picture like any other (D-067).
  */
 export function cardContent(post: Post, parser: DOMParser): CardContent {
   const image = cardImage(post);
@@ -39,7 +41,7 @@ export function cardContent(post: Post, parser: DOMParser): CardContent {
 }
 
 function cardImage(post: Post): CardContent | null {
-  if (post.over18 || post.thumbnailUrl === null) {
+  if (post.thumbnailUrl === null) {
     return null;
   }
   const isMedia =
