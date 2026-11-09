@@ -49,7 +49,9 @@ export default defineConfig({
       96: 'icon.svg',
       128: 'icon.svg',
     },
-    permissions: ['storage'],
+    // webRequest, webRequestBlocking and webRequestFilterResponse: only to
+    // recolor Reddit's web app manifest (D-069, src/entrypoints/background.ts).
+    permissions: ['storage', 'webRequest', 'webRequestBlocking', 'webRequestFilterResponse'],
     // Reddit hosts only. D-027 sends every reddit.com link to our reader.
     host_permissions: [
       'https://old.reddit.com/*',
@@ -57,6 +59,8 @@ export default defineConfig({
       'https://reddit.com/*',
       // Reddit's own video host, for videos with sound (D-054).
       'https://v.redd.it/*',
+      // Reddit's static host, for its web app manifest only (D-069).
+      'https://www.redditstatic.com/*',
     ],
     // Firefox refuses a content script's fetch of the extension's own files
     // unless they are listed here ("NetworkError", owner test session 003).

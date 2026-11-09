@@ -347,3 +347,8 @@ Source: session 005, owner after the M6 test: "Yes, show NSFW pictures"; "That's
 Date: 2026-11-09 · Decider: owner (detail by Claude)
 Decision: Wherever the reader shows an author (u/name on the post page, each comment's author), the name is a link to that user's profile on old.reddit.com (/user/name/), opened in the same tab like any link (Ctrl or middle click opens a new tab). Reddit's profile page shows as Reddit's own page until profiles are rebuilt (not planned). "[deleted]" authors are not links. The OP blue on comment authors stays. Settles the M7 author-link question.
 Source: session 005, owner: "u/name should be a link".
+
+### D-069: Recolor Reddit's web app manifest for home-screen shortcuts
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: old.reddit.com links to Reddit's web app manifest (https://www.redditstatic.com/desktop2x/img/favicon/manifest.json), which sets theme_color and background_color to #ffffff; Firefox for Android colors the bars around a home-screen shortcut from it, so they were white. A background script changes those two values, and nothing else, to the reader's background (the Theme setting; Device: the device's mode when the file loads) as Firefox loads the file (webRequest.filterResponseData, the method the "Twitter PWA colors fixer" add-on uses). New permissions: webRequest, webRequestBlocking, webRequestFilterResponse (MV3, Firefox 110+, per MDN) and the host https://www.redditstatic.com/*. Anything that is not a JSON object passes through unchanged. A theme-color tag on the page (0.1.5) was tried first and did not change the bars; it stays. The shortcut must be added again after installing.
+Source: session 005, owner approved "Yes, build it" after checking the page source on the PC.
