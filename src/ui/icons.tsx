@@ -145,3 +145,23 @@ export function GalleryIcon({ size = 14 }: { size?: number }) {
     </Icon>
   );
 }
+
+/** Save (a bookmark); filled once saved (D-063). */
+export function BookmarkIcon({ size = 20, filled = false }: { size?: number; filled?: boolean }) {
+  return (
+    <Icon size={size}>
+      <path d="M6 3h12v18l-6-4-6 4z" fill={filled ? 'currentColor' : 'none'} />
+    </Icon>
+  );
+}
+
+/** Share: a box with an arrow out of it. */
+export function ShareIcon({ size = 20 }: { size?: number }) {
+  return (
+    <Icon size={size}>
+      <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+      <path d="M16 6l-4-4-4 4" />
+      <path d="M12 2v14" />
+    </Icon>
+  );
+}

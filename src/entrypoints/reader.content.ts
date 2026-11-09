@@ -76,6 +76,8 @@ function redditSource(view: FeedView, viewStore: ViewStore): FeedSource {
   const feedSearch = direct ? '' : search;
   return {
     vote: (fullname, dir) => client.vote(fullname, dir),
+    save: (fullname, saved) => client.save(fullname, saved),
+    comment: (parentFullname, text) => client.comment(parentFullname, text),
     loadAccount: () => client.account(),
     loadSubreddits: () => loadSubscriptions(fetchJson),
     title: feedTitle(feedPath),

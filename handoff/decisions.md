@@ -317,3 +317,8 @@ Source: session 004, owner chose "Saved choice, temp control" over a plain top-b
 Date: 2026-11-09 · Decider: owner (detail by Claude)
 Decision: An opened post is one full-screen page that scrolls as one: the post's content (picture, gallery, video, text or link card, D-025, D-054 to D-056), its vote bar, then the sort bar and the comments. There is no separate content layer. Tapping a post's title, picture, excerpt or link chip opens the page at the top; tapping its comment count opens the same page scrolled to the comments. Back returns to the same place in the feed (D-021 otherwise stands).
 Source: session 004, owner after the phone test: "the Content and The Comments page should be the same ... Content up top, comments underneath, as one scrollable page."
+
+### D-063: M5 actions: share, save, comment and reply
+Date: 2026-11-09 · Decider: owner (detail by Claude)
+Decision: Share hands out the normal Reddit link (https://www.reddit.com plus the post's address); it opens the device's share menu where there is one (Firefox for Android) and otherwise copies the link and says "Link copied". Posts and comments can both be saved (a Save button on the post's vote row and in each comment's action row; changes layout-spec 5.5, which had no Save on comments). Writing happens in place: "Comment" in the sort bar opens a text box under it, and "Reply" opens one under that comment, each with Cancel and Post; the new comment appears in place when Reddit accepts it. All of it is sent like votes (form plus modhash, D-047).
+Source: session 004, owner chose the recommended options, then changed Save to "Posts AND comments".

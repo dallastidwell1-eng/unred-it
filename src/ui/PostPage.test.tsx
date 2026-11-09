@@ -19,6 +19,7 @@ function makePost(partial: Partial<Post> = {}): Post {
     permalink: '/r/books/comments/p/a_post/',
     url: 'https://example.com/story',
     likes: null,
+    saved: false,
     createdUtc: 0,
     isSelf: false,
     domain: 'example.com',
@@ -48,6 +49,7 @@ function comment(id: string): CommentNode {
     score: 1,
     scoreHidden: false,
     likes: null,
+    saved: false,
     createdUtc: 0,
     depth: 0,
     isSubmitter: false,
@@ -58,6 +60,9 @@ function comment(id: string): CommentNode {
     replies: [],
   };
 }
+
+/** The same factory, for tests where `comment` names the mocked action. */
+const makeComment = comment;
 
 let box: HTMLDivElement | null = null;
 
@@ -227,5 +232,139 @@ describe('PostPage opened from a comment link (D-027)', () => {
     expect(element.querySelector('.focus-note')).toBeNull();
     expect(element.querySelectorAll('.comment')).toHaveLength(2);
     expect(element.querySelector('.comment-text.focused')).toBeNull();
+  });
+});
+
+describe('PostPage actions: comment, reply, save (D-063)', () => {
+  function showWithActions(options: { saveFails?: boolean } = {}) {
+    const comment = vi.fn((_parent: string, text: string) =>
+      Promise.resolve({ ...makeComment('new'), bodyHtml: `<p>${text}</p>` }),
+    );
+    const save = vi.fn(() =>
+      options.saveFails ? Promise.reject(new Error('TOO_OLD')) : Promise.resolve(),
+    );
+    const onClose = vi.fn();
+    const onSavePost = vi.fn(() => Promise.resolve());
+    const element = document.createElement('div');
+    box = element;
+    document.body.append(element);
+    void act(() => {
+      render(
+        <PostPage
+          post={post}
+          now={0}
+          active
+          source={{
+            loadThread: () => Promise.resolve([makeComment('c1'), makeComment('c2')]),
+            loadMore: vi.fn(),
+            comment,
+            save,
+          }}
+          onClose={onClose}
+          onSavePost={onSavePost}
+        />,
+        element,
+      );
+    });
+    return { element, comment, save, onClose, onSavePost };
+  }
+
+  const type = (field: HTMLTextAreaElement | null, text: string) => {
+    void act(() => {
+      if (field) {
+        field.value = text;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  };
+
+  it('writes a comment on the post from the sort bar; it appears first', async () => {
+    const { element, comment } = showWithActions();
+    await act(settle);
+    void act(() => {
+      element.querySelector<HTMLButtonElement>('.comment-button')?.click();
+    });
+    const field = element.querySelector<HTMLTextAreaElement>('.comment-box-top .comment-field');
+    const postButton = () => element.querySelector<HTMLButtonElement>('.post-button');
+    expect(document.activeElement).toBe(field);
+    expect(postButton()?.disabled).toBe(true);
+    type(field, 'Nice one');
+    await act(async () => {
+      postButton()?.click();
+      await settle();
+    });
+    expect(comment).toHaveBeenCalledWith('t3_p', 'Nice one');
+    expect(element.querySelector('.comment-box')).toBeNull();
+    expect(element.querySelector('.comment .comment-text')?.textContent).toBe('Nice one');
+  });
+
+  it('replies under a comment', async () => {
+    const { element, comment } = showWithActions();
+    await act(settle);
+    void act(() => {
+      element.querySelector<HTMLButtonElement>('.comment-action.reply')?.click();
+    });
+    type(element.querySelector<HTMLTextAreaElement>('.comment-field'), 'Agreed');
+    await act(async () => {
+      element.querySelector<HTMLButtonElement>('.post-button')?.click();
+      await settle();
+    });
+    expect(comment).toHaveBeenCalledWith('t1_c1', 'Agreed');
+    const first = element.querySelector('.comment');
+    expect(first?.querySelector('.replies .comment-text')?.textContent).toBe('Agreed');
+  });
+
+  it('Esc keeps typed text and the page; an empty box closes', async () => {
+    const { element, onClose } = showWithActions();
+    await act(settle);
+    void act(() => {
+      element.querySelector<HTMLButtonElement>('.comment-button')?.click();
+    });
+    const field = element.querySelector<HTMLTextAreaElement>('.comment-field');
+    type(field, 'Draft');
+    const esc = () => {
+      void act(() => {
+        field?.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true }),
+        );
+      });
+    };
+    esc();
+    expect(element.querySelector('.comment-box')).not.toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    type(field, '');
+    esc();
+    expect(element.querySelector('.comment-box')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('saves a comment, and puts it back when Reddit refuses', async () => {
+    const saving = showWithActions();
+    await act(settle);
+    const saveButton = () =>
+      saving.element.querySelector<HTMLButtonElement>('.comment-action.save');
+    await act(async () => {
+      saveButton()?.click();
+      await settle();
+    });
+    expect(saving.save).toHaveBeenCalledWith('t1_c1', true);
+    expect(saveButton()?.textContent).toBe('Saved');
+    render(null, saving.element);
+    saving.element.remove();
+
+    const refused = showWithActions({ saveFails: true });
+    await act(settle);
+    await act(async () => {
+      refused.element.querySelector<HTMLButtonElement>('.comment-action.save')?.click();
+      await settle();
+    });
+    expect(refused.element.querySelector('.comment-action.save')?.textContent).toBe('Save');
+    expect(refused.element.querySelector('.action-error')?.textContent).toBe('Not saved: TOO_OLD');
+  });
+
+  it('saves the post from its vote row', () => {
+    const { element, onSavePost } = showWithActions();
+    element.querySelector<HTMLButtonElement>('.post-tools .save')?.click();
+    expect(onSavePost).toHaveBeenCalledTimes(1);
   });
 });

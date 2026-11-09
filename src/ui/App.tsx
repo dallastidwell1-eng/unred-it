@@ -4,7 +4,7 @@
 // The feed stays mounted underneath, so its place never changes (D-021).
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import type { CommentSort, MoreNode, ThreadItem } from '../lib/comments';
+import type { CommentNode, CommentSort, MoreNode, ThreadItem } from '../lib/comments';
 import { searchPath, type SearchInfo } from '../lib/feed-route';
 import type { Account } from '../lib/reddit-client';
 import type { Community, FeedPage, Post, VoteDirection } from '../lib/reddit-data';
@@ -35,6 +35,10 @@ export interface FeedSource {
   loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
   /** Sends a vote as the logged-in user. Missing where voting is not possible. */
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
+  /** Saves (true) or unsaves (false) a post or comment (D-063). */
+  save?: (fullname: string, saved: boolean) => Promise<void>;
+  /** Posts a comment or reply as the logged-in user (D-063). */
+  comment?: (parentFullname: string, text: string) => Promise<CommentNode>;
   /** The user's subscribed subreddits, sorted. Missing where they cannot be read. */
   loadSubreddits?: () => Promise<Subreddit[]>;
   /** Opens another reader page (feed or search). Default: the browser loads it. */
@@ -309,26 +313,45 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
   }, [overlays]);
 
   /** Shows the vote at once, sends it, and puts the post back if Reddit says no. */
+  /** Shows a changed post wherever it is listed. */
+  const showPost = useCallback((next: Post) => {
+    const swap = (list: Post[]) => list.map((p) => (p.fullname === next.fullname ? next : p));
+    setPosts(swap);
+    setExtraPosts(swap);
+  }, []);
+
   const vote = useCallback(
     async (post: Post, pressed: VoteButton) => {
       if (!source.vote) {
         return;
       }
       const dir = directionFor(post.likes, pressed);
-      const show = (next: Post) => {
-        const swap = (list: Post[]) => list.map((p) => (p.fullname === next.fullname ? next : p));
-        setPosts(swap);
-        setExtraPosts(swap);
-      };
-      show(applyVote(post, dir));
+      showPost(applyVote(post, dir));
       try {
         await source.vote(post.fullname, dir);
       } catch (cause) {
-        show(post);
+        showPost(post);
         throw cause;
       }
     },
-    [source],
+    [source, showPost],
+  );
+
+  /** Saves or unsaves a post at once, and puts it back if Reddit says no (D-063). */
+  const savePost = useCallback(
+    async (post: Post) => {
+      if (!source.save) {
+        return;
+      }
+      showPost({ ...post, saved: !post.saved });
+      try {
+        await source.save(post.fullname, !post.saved);
+      } catch (cause) {
+        showPost(post);
+        throw cause;
+      }
+    },
+    [source, showPost],
   );
 
   const loadMore = useCallback(async () => {
@@ -589,6 +612,7 @@ export function App({ source, note }: { source: FeedSource; note?: string }) {
               source={source}
               onClose={closeTop}
               onVotePost={voteFor(post)}
+              onSavePost={source.save ? () => savePost(post) : undefined}
               focus={overlay.focus}
               start={overlay.start}
             />

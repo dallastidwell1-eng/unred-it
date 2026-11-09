@@ -14,6 +14,8 @@ export interface Post {
   url: string;
   /** true = upvoted by the user, false = downvoted, null = no vote. */
   likes: boolean | null;
+  /** Saved by the user (D-063). */
+  saved: boolean;
   /** Seconds since 1970 (UTC). */
   createdUtc: number;
   isSelf: boolean;
@@ -129,6 +131,7 @@ function toPost(data: Record<string, unknown>): Post {
     permalink: str(data, 'permalink'),
     url: str(data, 'url'),
     likes: typeof likes === 'boolean' ? likes : null,
+    saved: data.saved === true,
     createdUtc: num(data, 'created_utc'),
     isSelf: data.is_self === true,
     domain: str(data, 'domain'),

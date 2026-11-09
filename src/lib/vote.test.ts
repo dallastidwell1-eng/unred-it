@@ -67,7 +67,7 @@ describe('createRedditClient.vote', () => {
 
   it('reports a logged-out user, a refusal and an HTTP error', async () => {
     const loggedOut = createRedditClient(async () => Promise.resolve(reply(200, {})));
-    await expect(loggedOut.vote('t3_a', 1)).rejects.toThrow('Log in to Reddit to vote.');
+    await expect(loggedOut.vote('t3_a', 1)).rejects.toThrow('Log in to Reddit first.');
 
     const refusing = createRedditClient(async (url) =>
       Promise.resolve(

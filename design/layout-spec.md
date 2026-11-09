@@ -111,7 +111,9 @@ D-062 replaced the separate content layer: an opened post is one page (5.5) with
 - Thread line: 1 px, `line2`, at x = (comment's left edge + 7 px), running the full height of its children.
 - Fold marker: 16 px circle with a 1 px `marker` ring, on top of the thread line at the comment's header, in a 44 x 44 target. Minus sign when open, plus sign when folded (D-026).
 - Folded branch shows "N replies hidden" in the meta style.
-- Comment: header (author, age, points) 24 px min; body 4 px below; action row (up, down, Reply) with 40 px targets.
+- Comment: header (author, age, points) 24 px min; body 4 px below; action row (up, down, Reply, Save) with 40 px targets (D-063 added Save).
+- Writing (D-063): "Comment" opens a text box under the sort bar; "Reply" opens one under that comment. Box: 96 px min, radius 10, then a hint ("Reddit formatting (markdown) works."), Cancel, and a blue Post button (40 px). Esc closes an empty box only; Ctrl+Enter posts.
+- Save and Share sit at the right end of the post's vote row; Saved shows in blue. Share opens the device's share menu, or copies the link ("Link copied"); if copying fails, the link shows in a field to copy by hand.
 
 ### 5.6 Subreddit picker **[M]**
 - Drops down under the top bar as a sheet (radius 0 0 16 16), max height 660 px on phone, with a scrim behind.

@@ -2,6 +2,7 @@
 // them (D-047): a form plus the session's modhash. The modhash is kept in
 // memory only; it is never shown, logged or stored.
 
+import { type CommentNode, parsePostedComment } from './comments';
 import { type Me, parseMe, type VoteDirection, voteBody } from './reddit-data';
 
 export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
@@ -14,6 +15,10 @@ export interface Account {
 
 export interface RedditClient {
   vote(fullname: string, dir: VoteDirection): Promise<void>;
+  /** Saves (true) or unsaves (false) a post or comment (D-063). */
+  save(fullname: string, saved: boolean): Promise<void>;
+  /** Posts a comment under a post ("t3_") or a reply under a comment ("t1_"). */
+  comment(parentFullname: string, text: string): Promise<CommentNode>;
   /** The logged-in user, or null when logged out or Reddit does not answer. */
   account(): Promise<Account | null>;
 }
@@ -45,7 +50,7 @@ export function createRedditClient(fetchFn: FetchLike): RedditClient {
       }
       const user = parseMe(await response.json());
       if (!user) {
-        throw new Error('Log in to Reddit to vote.');
+        throw new Error('Log in to Reddit first.');
       }
       return user;
     })();
@@ -57,7 +62,8 @@ export function createRedditClient(fetchFn: FetchLike): RedditClient {
     }
   }
 
-  async function post(path: string, body: (modhash: string) => string): Promise<void> {
+  /** Sends a form; returns Reddit's answer (parsed JSON, or null). */
+  async function post(path: string, body: (modhash: string) => string): Promise<unknown> {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const user = await me();
       const response = await fetchFn(path, {
@@ -84,13 +90,31 @@ export function createRedditClient(fetchFn: FetchLike): RedditClient {
       if (refused) {
         throw new Error(`Reddit refused: ${refused}`);
       }
-      return;
+      return json;
     }
+    throw new Error('Reddit answered HTTP 403');
   }
 
   return {
-    vote(fullname, dir) {
-      return post('/api/vote', (modhash) => voteBody(fullname, dir, modhash));
+    async vote(fullname, dir) {
+      await post('/api/vote', (modhash) => voteBody(fullname, dir, modhash));
+    },
+    async save(fullname, saved) {
+      await post(saved ? '/api/save' : '/api/unsave', (modhash) =>
+        new URLSearchParams({ id: fullname, uh: modhash }).toString(),
+      );
+    },
+    async comment(parentFullname, text) {
+      // raw_json=1: the new comment's HTML comes unescaped, like the feeds.
+      const answer = await post('/api/comment?raw_json=1', (modhash) =>
+        new URLSearchParams({
+          api_type: 'json',
+          thing_id: parentFullname,
+          text,
+          uh: modhash,
+        }).toString(),
+      );
+      return parsePostedComment(answer);
     },
     async account() {
       try {

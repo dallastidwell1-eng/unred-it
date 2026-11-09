@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addComment,
   type CommentNode,
   parseMoreChildren,
   parseThreadPage,
@@ -117,5 +118,30 @@ describe('updateComment', () => {
     expect(b.score).toBe(99);
     expect(((comments[0] as CommentNode).replies[0] as CommentNode).score).toBe(5);
     expect(next[1]).toBe(comments[1]);
+  });
+});
+
+describe('addComment (D-063)', () => {
+  const added = (id: string): CommentNode => {
+    const { comments } = parseThreadPage([page[0], listing([t1(id)])]);
+    return comments[0] as CommentNode;
+  };
+
+  it('puts a comment on the post at the top', () => {
+    const { comments } = parseThreadPage(page);
+    const next = addComment(comments, 't3_post', added('new'));
+    expect(next.map((item) => item.id)).toEqual(['new', 'a', 'e']);
+  });
+
+  it('puts a reply first under its comment', () => {
+    const { comments } = parseThreadPage(page);
+    const next = addComment(comments, 't1_a', added('reply'));
+    const a = next[0] as CommentNode;
+    expect(a.replies.map((item) => item.id)).toEqual(['reply', 'b', 'm1']);
+  });
+
+  it('reads whether a comment is saved', () => {
+    const { comments } = parseThreadPage([page[0], listing([t1('s', { saved: true }), t1('u')])]);
+    expect(comments.map((c) => (c as CommentNode).saved)).toEqual([true, false]);
   });
 });

@@ -1,10 +1,12 @@
 // The post page (D-062, layout-spec 5.4 and 5.5): one full-screen page over
 // the feed that scrolls as one: the post's content and vote bar on top, then
 // the sort bar and the comments. Threads fold with a marker on the thread
-// line (D-026). The feed stays mounted underneath (D-021).
+// line (D-026). Save, share, comment and reply happen here (D-063). The feed
+// stays mounted underneath (D-021).
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import {
+  addComment,
   type CommentNode,
   type CommentSort,
   type MoreNode,
@@ -20,6 +22,7 @@ import type { CommentFocus } from '../lib/thread-loader';
 import { applyVote, directionFor, type VoteButton } from '../lib/vote';
 import { BackIcon, DownIcon, UpIcon } from './icons';
 import { PostMedia, PostText } from './PostMedia';
+import { PostTools } from './PostTools';
 import { SubredditLink } from './SubredditLink';
 import { useDialogKeys } from './useDialogKeys';
 import { VoteBar } from './VoteBar';
@@ -35,19 +38,111 @@ export interface CommentsSource {
   loadThread(post: Post, sort: CommentSort, focus?: CommentFocus): Promise<ThreadItem[]>;
   loadMore(post: Post, more: MoreNode, sort: CommentSort): Promise<ThreadItem[]>;
   vote?: (fullname: string, dir: VoteDirection) => Promise<void>;
+  /** Saves (true) or unsaves (false) a post or comment (D-063). */
+  save?: (fullname: string, saved: boolean) => Promise<void>;
+  /** Posts a comment or reply; Reddit sends the new comment back (D-063). */
+  comment?: (parentFullname: string, text: string) => Promise<CommentNode>;
 }
 
 interface ThreadActions {
   now: number;
   canVote: boolean;
+  canSave: boolean;
+  canReply: boolean;
   /** The comment a comment link pointed at, drawn highlighted. */
   focusId?: string;
+  /** Where the one open writing box is: a comment's fullname, or null. */
+  replyTo: string | null;
+  openReply(fullname: string): void;
+  closeReply: () => void;
+  postReply(parentFullname: string, text: string): Promise<void>;
   vote(comment: CommentNode, pressed: VoteButton): Promise<void>;
+  save(comment: CommentNode): Promise<void>;
   loadMore(more: MoreNode): Promise<void>;
 }
 
 function message(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
+}
+
+/**
+ * The writing box for a comment or a reply, in place (D-063). Esc closes an
+ * empty box; with text in it, Esc does nothing, so nothing typed is lost.
+ * Ctrl+Enter (or Cmd+Enter) posts.
+ */
+function CommentBox({
+  label,
+  onPost,
+  onCancel,
+}: {
+  label: string;
+  onPost: (text: string) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const field = useRef<HTMLTextAreaElement>(null);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    field.current?.focus();
+  }, []);
+
+  const send = () => {
+    if (!text.trim() || busy) {
+      return;
+    }
+    setBusy(true);
+    setError('');
+    onPost(text).catch((cause: unknown) => {
+      setError(message(cause));
+      setBusy(false);
+    });
+  };
+
+  return (
+    <div class="comment-box">
+      <textarea
+        ref={field}
+        class="comment-field"
+        aria-label={label}
+        placeholder={label}
+        rows={4}
+        value={text}
+        disabled={busy}
+        onInput={(event) => {
+          setText(event.currentTarget.value);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            // The page would close on Esc; inside the box it only closes the box.
+            event.preventDefault();
+            event.stopPropagation();
+            if (!text.trim()) {
+              onCancel();
+            }
+          } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            send();
+          }
+        }}
+      />
+      {error && (
+        <p class="action-error" role="alert">
+          Not posted: {error}
+        </p>
+      )}
+      <div class="comment-box-bar">
+        <span class="comment-box-hint">Reddit formatting (markdown) works.</span>
+        <button type="button" class="text-button" disabled={busy} onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="button" class="post-button" disabled={busy || !text.trim()} onClick={send}>
+          {busy ? 'Posting…' : 'Post'}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function MoreItem({ more, actions }: { more: MoreNode; actions: ThreadActions }) {
@@ -90,21 +185,26 @@ function CommentItem({ comment, actions }: { comment: CommentNode; actions: Thre
   const hidden = replyCount(comment);
   const vote = comment.likes === true ? 'up' : comment.likes === false ? 'down' : '';
 
-  const press = (pressed: VoteButton) => {
+  /** Runs one vote or save at a time; a refusal shows under the comment. */
+  const run = (action: () => Promise<void>, failure: string) => {
     if (busy) {
       return;
     }
     setBusy(true);
     setError('');
-    actions
-      .vote(comment, pressed)
+    action()
       .catch((cause: unknown) => {
-        setError(message(cause));
+        setError(`${failure}: ${message(cause)}`);
       })
       .finally(() => {
         setBusy(false);
       });
   };
+  const press = (pressed: VoteButton) => {
+    run(() => actions.vote(comment, pressed), 'Vote not sent');
+  };
+  const hasActions = actions.canVote || actions.canReply || actions.canSave;
+  const replying = actions.replyTo === comment.fullname;
 
   return (
     <li class={`comment${folded ? ' folded' : ''}`}>
@@ -150,36 +250,75 @@ function CommentItem({ comment, actions }: { comment: CommentNode; actions: Thre
             html={comment.bodyHtml}
             className={comment.id === actions.focusId ? 'comment-text focused' : 'comment-text'}
           />
-          {actions.canVote && (
+          {hasActions && (
             <div class={`comment-actions vote-group ${vote}`}>
-              <button
-                type="button"
-                class="icon-button small vote-up"
-                aria-label={comment.likes === true ? 'Remove upvote' : 'Upvote'}
-                aria-pressed={comment.likes === true}
-                onClick={() => {
-                  press('up');
-                }}
-              >
-                <UpIcon size={18} />
-              </button>
-              <button
-                type="button"
-                class="icon-button small vote-down"
-                aria-label={comment.likes === false ? 'Remove downvote' : 'Downvote'}
-                aria-pressed={comment.likes === false}
-                onClick={() => {
-                  press('down');
-                }}
-              >
-                <DownIcon size={18} />
-              </button>
+              {actions.canVote && (
+                <>
+                  <button
+                    type="button"
+                    class="icon-button small vote-up"
+                    aria-label={comment.likes === true ? 'Remove upvote' : 'Upvote'}
+                    aria-pressed={comment.likes === true}
+                    onClick={() => {
+                      press('up');
+                    }}
+                  >
+                    <UpIcon size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button small vote-down"
+                    aria-label={comment.likes === false ? 'Remove downvote' : 'Downvote'}
+                    aria-pressed={comment.likes === false}
+                    onClick={() => {
+                      press('down');
+                    }}
+                  >
+                    <DownIcon size={18} />
+                  </button>
+                </>
+              )}
+              {actions.canReply && (
+                <button
+                  type="button"
+                  class="comment-action reply"
+                  aria-expanded={replying}
+                  onClick={() => {
+                    if (replying) {
+                      actions.closeReply();
+                    } else {
+                      actions.openReply(comment.fullname);
+                    }
+                  }}
+                >
+                  Reply
+                </button>
+              )}
+              {actions.canSave && (
+                <button
+                  type="button"
+                  class={comment.saved ? 'comment-action save saved' : 'comment-action save'}
+                  aria-pressed={comment.saved}
+                  onClick={() => {
+                    run(() => actions.save(comment), 'Not saved');
+                  }}
+                >
+                  {comment.saved ? 'Saved' : 'Save'}
+                </button>
+              )}
             </div>
           )}
           {error && (
             <p class="action-error" role="alert">
-              Vote not sent: {error}
+              {error}
             </p>
+          )}
+          {replying && (
+            <CommentBox
+              label={`Reply to ${comment.author}`}
+              onPost={(text) => actions.postReply(comment.fullname, text)}
+              onCancel={actions.closeReply}
+            />
           )}
           {comment.replies.length > 0 && <Thread items={comment.replies} actions={actions} />}
         </div>
@@ -209,6 +348,7 @@ export function PostPage({
   source,
   onClose,
   onVotePost,
+  onSavePost,
   focus,
   start = 'post',
 }: {
@@ -220,6 +360,8 @@ export function PostPage({
   source: CommentsSource;
   onClose: () => void;
   onVotePost?: (pressed: VoteButton) => Promise<void>;
+  /** Saves or unsaves the post (D-063). Missing: the Save button is disabled. */
+  onSavePost?: () => Promise<void>;
   /** "comments" opens the page scrolled to the comments (D-062). Default: the post. */
   start?: PostPageStart;
 }) {
@@ -232,6 +374,8 @@ export function PostPage({
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  /** The one open writing box: the post's fullname (new comment) or a comment's. */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
 
   useDialogKeys(panel, active, onClose);
 
@@ -307,7 +451,40 @@ export function PostPage({
   const actions: ThreadActions = {
     now,
     canVote: Boolean(source.vote),
+    canSave: Boolean(source.save),
+    canReply: Boolean(source.comment),
     focusId: focusing ? focus?.commentId : undefined,
+    replyTo,
+    openReply: setReplyTo,
+    closeReply: () => {
+      setReplyTo(null);
+    },
+    async postReply(parentFullname, text) {
+      if (!source.comment) {
+        return;
+      }
+      const added = await source.comment(parentFullname, text);
+      setItems((list) => addComment(list ?? [], parentFullname, added));
+      setReplyTo(null);
+    },
+    async save(comment) {
+      if (!source.save) {
+        return;
+      }
+      const saved = !comment.saved;
+      const mark = (value: boolean) => {
+        setItems((list) =>
+          list ? updateComment(list, comment.fullname, (c) => ({ ...c, saved: value })) : list,
+        );
+      };
+      mark(saved);
+      try {
+        await source.save(comment.fullname, saved);
+      } catch (cause) {
+        mark(comment.saved);
+        throw cause;
+      }
+    },
     async vote(comment, pressed) {
       if (!source.vote) {
         return;
@@ -383,6 +560,7 @@ export function PostPage({
             <PostMedia post={post} />
             <div class="summary-actions">
               <VoteBar post={post} onVote={onVotePost} />
+              <PostTools post={post} onSave={onSavePost} />
             </div>
           </div>
           <div class="sort-bar" ref={sortBar}>
@@ -402,10 +580,33 @@ export function PostPage({
                 ))}
               </select>
             </label>
-            <span class="sort-count">
-              {formatCount(post.numComments)} {post.numComments === 1 ? 'comment' : 'comments'}
-            </span>
+            <div class="sort-end">
+              <span class="sort-count">
+                {formatCount(post.numComments)} {post.numComments === 1 ? 'comment' : 'comments'}
+              </span>
+              {actions.canReply && (
+                <button
+                  type="button"
+                  class="comment-button"
+                  aria-expanded={replyTo === post.fullname}
+                  onClick={() => {
+                    setReplyTo(replyTo === post.fullname ? null : post.fullname);
+                  }}
+                >
+                  Comment
+                </button>
+              )}
+            </div>
           </div>
+          {replyTo === post.fullname && (
+            <div class="comment-box-top">
+              <CommentBox
+                label="Write a comment"
+                onPost={(text) => actions.postReply(post.fullname, text)}
+                onCancel={actions.closeReply}
+              />
+            </div>
+          )}
           <div aria-live="polite">
             {!items && !error && <p class="status">Loading comments…</p>}
             {error && (

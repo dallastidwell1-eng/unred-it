@@ -14,6 +14,8 @@ export interface CommentNode {
   score: number;
   scoreHidden: boolean;
   likes: boolean | null;
+  /** Saved by the user (D-063). */
+  saved: boolean;
   createdUtc: number;
   depth: number;
   /** Written by the post's author. */
@@ -111,6 +113,7 @@ export function parseThing(thing: unknown): ThreadItem | null {
     score: num(data, 'score'),
     scoreHidden: data.score_hidden === true,
     likes: typeof likes === 'boolean' ? likes : null,
+    saved: data.saved === true,
     createdUtc: num(data, 'created_utc'),
     depth: num(data, 'depth'),
     isSubmitter: data.is_submitter === true,
@@ -229,4 +232,53 @@ export function replyCount(comment: CommentNode): number {
     total += item.kind === 'comment' ? 1 + replyCount(item) : item.count;
   }
   return total;
+}
+
+/**
+ * Puts a new comment first under its parent: a reply under that comment, a
+ * comment on the post (its parent is the post, not in the tree) at the top.
+ */
+export function addComment(
+  items: ThreadItem[],
+  parentFullname: string,
+  added: CommentNode,
+): ThreadItem[] {
+  if (parentFullname.startsWith('t3_')) {
+    return [added, ...items];
+  }
+  return updateComment(items, parentFullname, (parent) => ({
+    ...parent,
+    replies: [added, ...parent.replies],
+  }));
+}
+
+/** Undoes Reddit's HTML escaping (&lt;div&gt;), in case an answer comes escaped. */
+export function unescapeHtml(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+/**
+ * The new comment in /api/comment's answer:
+ * {"json": {"errors": [], "data": {"things": [{"kind": "t1", "data": {...}}]}}}.
+ */
+export function parsePostedComment(json: unknown): CommentNode {
+  const things =
+    isRecord(json) &&
+    isRecord(json.json) &&
+    isRecord(json.json.data) &&
+    Array.isArray(json.json.data.things)
+      ? json.json.data.things
+      : [];
+  const item = parseThing(things[0]);
+  if (item?.kind !== 'comment') {
+    throw new Error('Reddit did not send the new comment back');
+  }
+  // Without raw_json the HTML comes escaped; the comment must show as text.
+  const bodyHtml = item.bodyHtml.startsWith('&lt;') ? unescapeHtml(item.bodyHtml) : item.bodyHtml;
+  return { ...item, bodyHtml, replies: [] };
 }

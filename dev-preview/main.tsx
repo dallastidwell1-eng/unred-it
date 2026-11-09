@@ -76,6 +76,7 @@ function post(partial: Partial<Post>): Post {
     permalink: '#',
     url: '#',
     likes: null,
+    saved: false,
     createdUtc: NOW_S - 3600 * 3,
     isSelf: false,
     domain: 'example.com',
@@ -224,6 +225,7 @@ function comment(
     score: 12,
     scoreHidden: false,
     likes: null,
+    saved: false,
     createdUtc: NOW_S - 3600 * 2,
     depth: 0,
     isSubmitter: false,
@@ -338,6 +340,26 @@ const source: FeedSource = {
     if (fullname === 't3_sample4') {
       throw new Error('Reddit refused: TOO_OLD (sample)');
     }
+  },
+  // Pretend save, comment and reply (D-063). Saving sample post 4 is refused,
+  // and a comment that says "fail" is refused, to show the error states.
+  async save(fullname) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    if (fullname === 't3_sample4') {
+      throw new Error('Reddit refused: TOO_OLD (sample)');
+    }
+  },
+  async comment(_parent, text) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (text.trim().toLowerCase() === 'fail') {
+      throw new Error('Reddit refused: RATELIMIT (sample)');
+    }
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const paragraphs = escaped
+      .split(/\n{2,}/)
+      .map((part) => `<p>${part}</p>`)
+      .join('');
+    return comment('sample_reader', paragraphs, { score: 1, likes: true, createdUtc: NOW_S });
   },
   title: feedTitle(FEED),
   path: FEED,
