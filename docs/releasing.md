@@ -28,6 +28,13 @@ $env:WEB_EXT_API_SECRET = Read-Host -MaskInput "AMO JWT secret"
 
 The keys last until you close that window.
 
+If signing stops with `Upload failed: Unauthorized` and `"Error decoding signature"`, the
+secret in that window does not match Mozilla's (cut short when pasted, an extra space, the
+two values swapped, or an old secret). Nothing was uploaded, so the same version can be sent
+again. Check without showing the values: `$env:WEB_EXT_API_KEY.StartsWith("user:")` should
+print True, and `$env:WEB_EXT_API_SECRET.Length` the secret's full length. Load the keys again,
+or generate new credentials on the API key page and save them at once (session 004).
+
 ## Sign a test build for the phone (unlisted)
 
 1. Every signed build needs a new, higher version number than any build sent

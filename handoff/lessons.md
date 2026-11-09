@@ -17,3 +17,7 @@ Rule: write and edit files with the editor tools (Write, Edit), not shell heredo
 ### L-03: Edit code with the Edit tool, not scripted find-and-replace
 Source: session 002, 2026-11-06: two scripted edits went wrong. A Python edit turned "\n" inside a TypeScript string into a real line break (broken file), and Python's str.replace removed a line in two places instead of one (a component lost its variable). Lint caught both before any test.
 Rule: change source files with the Edit tool, which needs one exact, unique match. Scripted edits only for mechanical changes that are checked right after (grep or lint).
+
+### L-04: The developer preview is not old.reddit.com on a phone
+Source: session 004, 2026-11-09: card view passed every 375 px check in the preview, but the owner's phone showed the whole reader tiny, because the preview page has a viewport tag and old.reddit.com's pages do not. Found only by the signed build on the phone.
+Rule: for anything that depends on the page around the reader (viewport, fonts, Reddit's own scripts and markup) or on the device (share menu, clipboard, touch), the preview proves nothing; ask the owner to test the built add-on, on the phone when layout or touch is involved, and say so in the log.

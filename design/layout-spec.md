@@ -93,6 +93,7 @@ The content layer covers the feed with a scrim (see color spec). The feed stays 
 - Radius 14, 1 px border, `surface` fill.
 - Meta line on top (14 px top padding), title 18/600, then one of: image 220 px high (full card width), two-line text excerpt, or a link chip.
 - Footer: score and comment-count button, 12 px padding.
+- As built (session 004, owner-tested): the picture shows for image, video and gallery posts only, and never for NSFW or spoiler posts (they get the link chip); 300 px high from 768 px wide, so wide cards do not crop to a strip; videos show a play mark, galleries a picture-count badge; link posts show the chip, not the article picture; the excerpt hides spoilers as "[spoiler]". A temporary top-bar button switches compact/card (D-061).
 
 ### 5.4 Post content (top of the post page) **[M]**
 D-062 replaced the separate content layer: an opened post is one page (5.5) with this content at its top, then the vote row, the sort bar and the comments. The drag handle, the layer's own header and its action bar are gone. The content:
